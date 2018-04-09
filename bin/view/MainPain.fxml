@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+
+
+<BorderPane prefHeight="774.0" prefWidth="1200.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="application.SampleController">
+   <top>
+      <VBox BorderPane.alignment="CENTER">
+         <children>
+            <MenuBar>
+              <menus>
+                <Menu mnemonicParsing="false" text="File">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="Close" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Edit">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="Delete" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Help">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="About" />
+                  </items>
+                </Menu>
+              </menus>
+            </MenuBar>
+            <ToolBar VBox.vgrow="NEVER">
+              <items>
+                <Button mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" />
+                  <Button mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" />
+                  <Button mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" />
+                  <Button mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" />
+                  <Separator orientation="VERTICAL" prefHeight="0.0" prefWidth="0.0" />
+                <Button mnemonicParsing="false" prefHeight="30.0" prefWidth="40.0" />
+                  <Button mnemonicParsing="false" prefHeight="30.0" prefWidth="40.0" />
+              </items>
+            </ToolBar>
+         </children>
+      </VBox>
+   </top>
+   <bottom>
+      <BorderPane BorderPane.alignment="CENTER">
+         <center>
+            <ProgressBar prefWidth="500.0" progress="0.0" BorderPane.alignment="CENTER" />
+         </center>
+         <right>
+            <Label text="Label" BorderPane.alignment="CENTER" />
+         </right>
+         <left>
+            <Label text="Label" BorderPane.alignment="CENTER" />
+         </left>
+      </BorderPane>
+   </bottom>
+   <center>
+      <HBox prefWidth="1200.0" BorderPane.alignment="CENTER">
+         <children>
+            <VBox prefWidth="600.0">
+               <children>
+                  <TextField maxWidth="1.7976931348623157E308" />
+                  <TableView maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="670.0" prefWidth="600.0" VBox.vgrow="ALWAYS">
+                    <columns>
+                      <TableColumn prefWidth="75.0" text="C1" />
+                      <TableColumn prefWidth="75.0" text="C2" />
+                    </columns>
+                  </TableView>
+               </children>
+            </VBox>
+            <VBox prefWidth="600.0">
+               <children>
+                  <TextField maxWidth="1.7976931348623157E308" />
+                  <TableView maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="670.0" prefWidth="600.0" VBox.vgrow="ALWAYS">
+                    <columns>
+                      <TableColumn prefWidth="75.0" text="C1" />
+                      <TableColumn prefWidth="75.0" text="C2" />
+                    </columns>
+                  </TableView>
+               </children>
+            </VBox>
+         </children>
+      </HBox>
+   </center>
+</BorderPane>
