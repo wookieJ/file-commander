@@ -6,8 +6,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
 
-
-<BorderPane prefHeight="774.0" prefWidth="1200.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="application.SampleController">
+<BorderPane prefHeight="774.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.MainPaneController">
    <top>
       <VBox BorderPane.alignment="CENTER">
          <children>
@@ -32,13 +31,14 @@
             </MenuBar>
             <ToolBar VBox.vgrow="NEVER">
               <items>
-                <Button mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" />
-                  <Button mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" />
-                  <Button mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" />
-                  <Button mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" />
+                <Button fx:id="deleteButton" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" />
+                  <Button fx:id="editButton" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" />
+                  <Button fx:id="newFolderButton" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" />
+                  <Button fx:id="newFileButton" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" />
                   <Separator orientation="VERTICAL" prefHeight="0.0" prefWidth="0.0" />
-                <Button mnemonicParsing="false" prefHeight="30.0" prefWidth="40.0" />
-                  <Button mnemonicParsing="false" prefHeight="30.0" prefWidth="40.0" />
+                <Button fx:id="moveToLeftButton" mnemonicParsing="false" prefHeight="30.0" prefWidth="40.0" />
+                  <Button fx:id="moveToRightButton" mnemonicParsing="false" prefHeight="30.0" prefWidth="40.0" />
+                  <Button fx:id="copyButton" mnemonicParsing="false" prefHeight="30.0" prefWidth="40.0" />
               </items>
             </ToolBar>
          </children>
@@ -47,13 +47,13 @@
    <bottom>
       <BorderPane BorderPane.alignment="CENTER">
          <center>
-            <ProgressBar prefWidth="500.0" progress="0.0" BorderPane.alignment="CENTER" />
+            <ProgressBar fx:id="progressBar" prefWidth="500.0" progress="0.0" BorderPane.alignment="CENTER" />
          </center>
          <right>
-            <Label text="Label" BorderPane.alignment="CENTER" />
+            <Label fx:id="rightLabel" text="Label" BorderPane.alignment="CENTER" />
          </right>
          <left>
-            <Label text="Label" BorderPane.alignment="CENTER" />
+            <Label fx:id="leftLabel" text="Label" BorderPane.alignment="CENTER" />
          </left>
       </BorderPane>
    </bottom>
@@ -62,24 +62,14 @@
          <children>
             <VBox prefWidth="600.0">
                <children>
-                  <TextField maxWidth="1.7976931348623157E308" />
-                  <TableView maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="670.0" prefWidth="600.0" VBox.vgrow="ALWAYS">
-                    <columns>
-                      <TableColumn prefWidth="75.0" text="C1" />
-                      <TableColumn prefWidth="75.0" text="C2" />
-                    </columns>
-                  </TableView>
+                  <TextField fx:id="leftPathTextField" maxWidth="1.7976931348623157E308" />
+                  <TableView fx:id="leftTableView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="670.0" prefWidth="600.0" VBox.vgrow="ALWAYS" />
                </children>
             </VBox>
             <VBox prefWidth="600.0">
                <children>
-                  <TextField maxWidth="1.7976931348623157E308" />
-                  <TableView maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="670.0" prefWidth="600.0" VBox.vgrow="ALWAYS">
-                    <columns>
-                      <TableColumn prefWidth="75.0" text="C1" />
-                      <TableColumn prefWidth="75.0" text="C2" />
-                    </columns>
-                  </TableView>
+                  <TextField fx:id="rightPathTextField" maxWidth="1.7976931348623157E308" />
+                  <TableView fx:id="rightTableView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="670.0" prefWidth="600.0" VBox.vgrow="ALWAYS" />
                </children>
             </VBox>
          </children>

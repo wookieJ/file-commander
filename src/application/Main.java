@@ -1,10 +1,10 @@
 package application;
 
 import javafx.application.Application;
-import javafx.stage.Stage;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
-import javafx.fxml.FXMLLoader;
+import javafx.stage.Stage;
 
 public class Main extends Application
 {
@@ -19,6 +19,7 @@ public class Main extends Application
 			primaryStage.setScene(scene);
 			// primaryStage.getIcons().add(new
 			// Image("/htmlApp/icons/windowIcon.png"));
+			primaryStage.setTitle("JCommander");
 			primaryStage.show();
 		} catch (Exception e)
 		{
