@@ -1,0 +1,49 @@
+/* ToolBar */
+#remove-button {
+    -fx-background-image: url("../resource/remove.png");
+    -fx-background-size: 90.0% 90.0%;
+}
+
+#edit-button {
+    -fx-background-image: url("../resource/rename.png");
+    -fx-background-size: 90.0% 90.0%; 
+}
+
+#new-folder-button {
+    -fx-background-image: url("../resource/newFolder.png");
+    -fx-background-size: 90.0% 90.0%; 
+}
+
+#new-file-button {
+    -fx-background-image: url("../resource/newFile.png");
+    -fx-background-size: 90.0% 90.0%; 
+}
+ 
+#move-left-button {
+    -fx-background-image: url("../resource/prev.png");
+}
+ 
+#move-right-button {
+    -fx-background-image: url("../resource/next.png");
+}
+
+#copy-left-button {
+    -fx-background-image: url("../resource/prev.png");
+}
+ 
+#copy-right-button {
+    -fx-background-image: url("../resource/next.png");
+}
+ 
+.button{
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center;
+    -fx-background-size: 70.0% 70.0%; 
+    -fx-background-color: transparent;
+    -fx-opacity: 60.0%;
+}
+ 
+/* After hovering */
+.button:hover{
+    -fx-opacity: 100.0%;
+}

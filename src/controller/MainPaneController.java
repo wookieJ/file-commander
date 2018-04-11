@@ -11,67 +11,86 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.cell.PropertyValueFactory;
 import model.SystemFile;
 
 public class MainPaneController implements Initializable
 {
 	private Properties properties;
 
-	@FXML
-	private TableView<SystemFile> rightTableView;
+	   @FXML
+	    private TableView<SystemFile> rightTableView;
 
-	@FXML
-	private Button deleteButton;
+	    @FXML
+	    private Button deleteButton;
 
-	@FXML
-	private TableView<SystemFile> leftTableView;
+	    @FXML
+	    private TableView<SystemFile> leftTableView;
 
-	@FXML
-	private Button newFolderButton;
+	    @FXML
+	    private MenuItem aboutMenuItem;
 
-	@FXML
-	private Button copyButton;
+	    @FXML
+	    private Button newFolderButton;
 
-	@FXML
-	private Button copyButton1;
+	    @FXML
+	    private Button copyButton;
 
-	@FXML
-	private Label rightLabel;
+	    @FXML
+	    private Menu helpMenu;
 
-	@FXML
-	private TextField leftPathTextField;
+	    @FXML
+	    private Button copyButton1;
 
-	@FXML
-	private TextField rightPathTextField;
+	    @FXML
+	    private Label rightLabel;
 
-	@FXML
-	private Label leftLabel;
+	    @FXML
+	    private TextField leftPathTextField;
 
-	@FXML
-	private Label copyLabel;
+	    @FXML
+	    private TextField rightPathTextField;
 
-	@FXML
-	private Button editButton;
+	    @FXML
+	    private Menu editMenu;
 
-	@FXML
-	private ProgressBar progressBar;
+	    @FXML
+	    private Label leftLabel;
 
-	@FXML
-	private Label moveLabel;
+	    @FXML
+	    private Label copyLabel;
 
-	@FXML
-	private Button moveToLeftButton;
+	    @FXML
+	    private Button editButton;
 
-	@FXML
-	private Button moveToRightButton;
+	    @FXML
+	    private ProgressBar progressBar;
+	    
+	    @FXML
+	    private MenuItem closeMenuItem;
 
-	@FXML
-	private Button newFileButton;
+	    @FXML
+	    private Button moveToLeftButton;
+
+	    @FXML
+	    private Label moveLabel;
+
+	    @FXML
+	    private Menu languageMenu;
+
+	    @FXML
+	    private Button moveToRightButton;
+
+	    @FXML
+	    private Button newFileButton;
+
+	    @FXML
+	    private Menu fileMenu;
 
 	public MainPaneController()
 	{
@@ -83,6 +102,36 @@ public class MainPaneController implements Initializable
 	public void initialize(URL location, ResourceBundle resources)
 	{
 		initTables();
+		initMenu();
+		initToolBar();
+	}
+
+	private void initMenu()
+	{
+		try
+		{
+			fileMenu.setText(properties.getProperty("file-menu"));
+			editMenu.setText(properties.getProperty("edit-menu"));
+			languageMenu.setText(properties.getProperty("language-menu"));
+			helpMenu.setText(properties.getProperty("help-menu"));
+			aboutMenuItem.setText(properties.getProperty("about-menuItem"));
+			closeMenuItem.setText(properties.getProperty("close-menuItem"));
+		} catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+	private void initToolBar()
+	{
+		try
+		{
+			moveLabel.setText(properties.getProperty("move-label"));
+			copyLabel.setText(properties.getProperty("copy-label"));
+		} catch (Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 
 	private void initTables()
