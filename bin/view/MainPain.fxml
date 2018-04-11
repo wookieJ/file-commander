@@ -97,21 +97,13 @@
                   <VBox alignment="CENTER">
                      <children>
                         <TextField fx:id="leftPathTextField" maxWidth="1.7976931348623157E308" />
-                        <TableView fx:id="leftTableView" VBox.vgrow="ALWAYS">
-                           <columnResizePolicy>
-                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-                           </columnResizePolicy>
-                        </TableView>
+                        <TableView fx:id="leftTableView" VBox.vgrow="ALWAYS" />
                      </children>
                   </VBox>
                   <VBox>
                      <children>
                         <TextField fx:id="rightPathTextField" maxWidth="1.7976931348623157E308" />
-                        <TableView fx:id="rightTableView" VBox.vgrow="ALWAYS">
-                           <columnResizePolicy>
-                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-                           </columnResizePolicy>
-                        </TableView>
+                        <TableView fx:id="rightTableView" VBox.vgrow="ALWAYS" />
                      </children>
                   </VBox>
                </items>

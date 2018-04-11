@@ -4,13 +4,22 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+
+import javafx.beans.property.SimpleStringProperty;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 public class SystemFile
 {
 	private File file;
-	private Long size;
-	private Long lastModified;
-	private String fileType;
+	private ImageView image;
+	private SimpleStringProperty fileName;
+	private SimpleStringProperty size;
+	private SimpleStringProperty fileType;
+	private String lastModified;
 
 	public File getFile()
 	{
@@ -22,34 +31,34 @@ public class SystemFile
 		this.file = file;
 	}
 
-	public Long getSize()
+	public ImageView getImage()
 	{
-		return size;
+		return image;
 	}
 
-	public void setSize(Long size)
+	public void setImage(ImageView image)
 	{
-		this.size = size;
+		this.image = image;
 	}
 
-	public Long getLastModified()
+	public String getFileName()
+	{
+		return fileName.get();
+	}
+
+	public String getSize()
+	{
+		return size.get();
+	}
+
+	public String getLastModified()
 	{
 		return lastModified;
 	}
 
-	public void setLastModified(Long lastModified)
-	{
-		this.lastModified = lastModified;
-	}
-
 	public String getFileType()
 	{
-		return fileType;
-	}
-
-	public void setFileType(String fileType)
-	{
-		this.fileType = fileType;
+		return fileType.get();
 	}
 
 	public SystemFile(File file)
@@ -59,12 +68,27 @@ public class SystemFile
 			if (file.exists())
 			{
 				this.file = file;
-				this.lastModified = file.lastModified();
-				this.size = Files.size(file.toPath());
+				SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
+				this.lastModified = sdf.format(new Date(file.lastModified()));
 				if (file.isFile())
-					this.fileType = "Plik " + file.getName().substring(file.getName().lastIndexOf(".") + 1);
+					this.size = new SimpleStringProperty(String.valueOf(Files.size(file.toPath())) + "b");
 				else
-					this.fileType = "Folder plików";
+					this.size = new SimpleStringProperty("");
+				this.fileName = new SimpleStringProperty(file.getName());
+
+				// ImageIcon icon = (ImageIcon)
+				// FileSystemView.getFileSystemView().getSystemIcon(file);
+				// this.image = new ImageView(icon.getImage());
+
+				this.image = new ImageView(new Image("resource/logo.png"));
+				image.setFitHeight(20);
+				image.setFitWidth(20);
+
+				if (file.isFile())
+					this.fileType = new SimpleStringProperty(
+							"Plik " + file.getName().substring(file.getName().lastIndexOf(".") + 1));
+				else
+					this.fileType = new SimpleStringProperty("Folder plików");
 			}
 		} catch (FileNotFoundException e)
 		{
@@ -75,11 +99,46 @@ public class SystemFile
 		}
 	}
 
-	/*
-	 * Properties prop = new Properties(); InputStream input = null; try { input
-	 * = new FileInputStream("properties/default.properties"); prop.load(input);
-	 * System.out.println(prop.getProperty("hello")); } catch (IOException ex) {
-	 * ex.printStackTrace(); } finally { if (input != null) { try {
-	 * input.close(); } catch (IOException e) { e.printStackTrace(); } } }
+	@Override
+	public String toString()
+	{
+		return "SystemFile [file=" + file.getPath() + ", size=" + size + ", lastModified=" + lastModified
+				+ ", fileType=" + fileType + "]";
+	}
+
+	/**
+	 * Checking if file exists.
+	 * 
+	 * @return true if exists, false otherwise
 	 */
+	public boolean exists()
+	{
+		return getFile().exists();
+	}
+
+	/**
+	 * Checking if file is a directory.
+	 * 
+	 * @return true if file is a directory
+	 */
+	public boolean isDirectory()
+	{
+		return getFile().isDirectory();
+	}
+
+	/**
+	 * Getting list of SystemFiles
+	 * 
+	 * @return
+	 */
+	public ArrayList<SystemFile> listSystemFiles()
+	{
+		ArrayList<SystemFile> systemFiles = new ArrayList<>();
+		for (File f : getFile().listFiles())
+		{
+			systemFiles.add(new SystemFile(f));
+		}
+
+		return systemFiles;
+	}
 }
