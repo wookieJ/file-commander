@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Properties;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.image.Image;
@@ -20,6 +21,8 @@ public class SystemFile
 	private SimpleStringProperty size;
 	private SimpleStringProperty fileType;
 	private String lastModified;
+	private Date lastModifiedDate;
+	
 
 	public File getFile()
 	{
@@ -46,14 +49,19 @@ public class SystemFile
 		return fileName.get();
 	}
 
+	public void setFileName(String fileName)
+	{
+		this.fileName = new SimpleStringProperty(fileName);
+	}
+
 	public String getSize()
 	{
 		return size.get();
 	}
 
-	public String getLastModified()
+	public void setSize(String size)
 	{
-		return lastModified;
+		this.size = new SimpleStringProperty(size);
 	}
 
 	public String getFileType()
@@ -61,34 +69,85 @@ public class SystemFile
 		return fileType.get();
 	}
 
-	public SystemFile(File file)
+	public void setFileType(String fileType)
+	{
+		this.fileType = new SimpleStringProperty(fileType);
+	}
+
+	public String getLastModified()
+	{
+		return lastModified;
+	}
+
+	public void setLastModified(String lastModified)
+	{
+		this.lastModified = lastModified;
+	}
+	
+	public Date getLastModifiedDate()
+	{
+		return lastModifiedDate;
+	}
+
+	public void setLastModifiedDate(Date lastModifiedDate)
+	{
+		this.lastModifiedDate = lastModifiedDate;
+	}
+
+	public SystemFile(File file, Properties properties)
 	{
 		try
 		{
 			if (file.exists())
 			{
 				this.file = file;
-				SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
-				this.lastModified = sdf.format(new Date(file.lastModified()));
-				if (file.isFile())
-					this.size = new SimpleStringProperty(String.valueOf(Files.size(file.toPath())) + "b");
+				
+				// data format
+				SimpleDateFormat sdf = new SimpleDateFormat(properties.getProperty("date-formater"));
+				this.lastModifiedDate = new Date(file.lastModified());
+				if(file.lastModified() != 0)
+					this.lastModified = sdf.format(lastModifiedDate);
 				else
+					this.lastModified = "";
+				
+				// setting size of file
+				if (file.isFile())
+				{
+					long size = Files.size(file.toPath());
+					if (size < 1024)
+						this.size = new SimpleStringProperty(String.valueOf(size) + "B");
+					else if (size < 1_024_000)
+						this.size = new SimpleStringProperty((String.format("%.1f", (double)size / 1_024)) + "kB");
+					else if (size < 1_024_000_000)
+						this.size = new SimpleStringProperty((String.format("%.1f", (double)size / 1_024_000)) + "MB");
+					else
+						this.size = new SimpleStringProperty((String.format("%.1f", (double)size / 1_024_000_000)) + "GB");
+				} else
 					this.size = new SimpleStringProperty("");
+				
+				// setting name of file
 				this.fileName = new SimpleStringProperty(file.getName());
 
+				
+				// setting image from icon
 				// ImageIcon icon = (ImageIcon)
 				// FileSystemView.getFileSystemView().getSystemIcon(file);
 				// this.image = new ImageView(icon.getImage());
 
-				this.image = new ImageView(new Image("resource/logo.png"));
+				// TODO - Convert file icon into imageView
+				if (file.isDirectory())
+					this.image = new ImageView(new Image("resource/logo.png"));
+				else
+					this.image = new ImageView(new Image("resource/newFile.png"));
 				image.setFitHeight(20);
 				image.setFitWidth(20);
 
+				// setting type of file based of extension
 				if (file.isFile())
 					this.fileType = new SimpleStringProperty(
-							"Plik " + file.getName().substring(file.getName().lastIndexOf(".") + 1));
+							properties.getProperty("file") + " " + file.getName().substring(file.getName().lastIndexOf(".") + 1));
 				else
-					this.fileType = new SimpleStringProperty("Folder plików");
+					this.fileType = new SimpleStringProperty(properties.getProperty("folder"));
 			}
 		} catch (FileNotFoundException e)
 		{
@@ -131,12 +190,12 @@ public class SystemFile
 	 * 
 	 * @return
 	 */
-	public ArrayList<SystemFile> listSystemFiles()
+	public ArrayList<SystemFile> listSystemFiles(Properties properties)
 	{
 		ArrayList<SystemFile> systemFiles = new ArrayList<>();
 		for (File f : getFile().listFiles())
 		{
-			systemFiles.add(new SystemFile(f));
+			systemFiles.add(new SystemFile(f, properties));
 		}
 
 		return systemFiles;

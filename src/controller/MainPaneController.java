@@ -2,21 +2,18 @@ package controller;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.ResourceBundle;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -30,11 +27,12 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import model.SystemFile;
 
 public class MainPaneController implements Initializable
 {
-	private static final String INITIAL_PATH = "C:/";
+	private static final String INITIAL_PATH = "C:/Users/£ukasz/Desktop";
 
 	private Properties properties;
 	private String leftPath;
@@ -47,19 +45,10 @@ public class MainPaneController implements Initializable
 	private Button deleteButton;
 
 	@FXML
-	private TableView<SystemFile> leftTableView;
-
-	@FXML
 	private MenuItem aboutMenuItem;
 
 	@FXML
 	private Button newFolderButton;
-
-	@FXML
-	private Button copyButton;
-
-	@FXML
-	private Menu helpMenu;
 
 	@FXML
 	private Button copyButton1;
@@ -68,34 +57,31 @@ public class MainPaneController implements Initializable
 	private Label rightLabel;
 
 	@FXML
-	private TextField leftPathTextField;
-
-	@FXML
 	private TextField rightPathTextField;
-
-	@FXML
-	private Menu editMenu;
 
 	@FXML
 	private Label leftLabel;
 
 	@FXML
-	private Label copyLabel;
+	private Label rightPathLabel;
 
 	@FXML
-	private Button editButton;
+	private MenuItem englishMenuItem;
+
+	@FXML
+	private Label copyLabel;
 
 	@FXML
 	private ProgressBar progressBar;
 
 	@FXML
-	private MenuItem closeMenuItem;
+	private Label leftPathLabel;
 
 	@FXML
 	private Button moveToLeftButton;
 
 	@FXML
-	private Label moveLabel;
+	private Button rightPathButton;
 
 	@FXML
 	private Menu languageMenu;
@@ -104,10 +90,40 @@ public class MainPaneController implements Initializable
 	private Button moveToRightButton;
 
 	@FXML
-	private Button newFileButton;
+	private Menu fileMenu;
 
 	@FXML
-	private Menu fileMenu;
+	private TableView<SystemFile> leftTableView;
+
+	@FXML
+	private Button copyButton;
+
+	@FXML
+	private Menu helpMenu;
+
+	@FXML
+	private TextField leftPathTextField;
+
+	@FXML
+	private Menu editMenu;
+
+	@FXML
+	private Button editButton;
+
+	@FXML
+	private MenuItem closeMenuItem;
+
+	@FXML
+	private Label moveLabel;
+
+	@FXML
+	private MenuItem polishMenuItem;
+
+	@FXML
+	private Button leftPathButton;
+
+	@FXML
+	private Button newFileButton;
 
 	public MainPaneController()
 	{
@@ -127,6 +143,78 @@ public class MainPaneController implements Initializable
 
 		loadFiles(0, leftPath); // 0 for left
 		loadFiles(1, rightPath); // 1 for right
+
+		englishMenuItemListener();
+		polishMenuItemListener();
+
+		tablesListener();
+	}
+
+	private void tablesListener()
+	{
+		leftTableView.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>()
+		{
+			@Override
+			public void handle(MouseEvent event)
+			{
+				if (event.getClickCount() == 2)
+				{
+					leftPath = leftTableView.getSelectionModel().getSelectedItem().getFile().getAbsolutePath();
+					loadFiles(0, leftPath); // 0 for left
+				}
+			}
+		});
+
+		rightTableView.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>()
+		{
+			@Override
+			public void handle(MouseEvent event)
+			{
+				if (event.getClickCount() == 2)
+				{
+					rightPath = rightTableView.getSelectionModel().getSelectedItem().getFile().getAbsolutePath();
+					loadFiles(1, rightPath); // 1 for right
+				}
+			}
+		});
+	}
+
+	private void polishMenuItemListener()
+	{
+		polishMenuItem.setOnAction(new EventHandler<ActionEvent>()
+		{
+			@Override
+			public void handle(ActionEvent event)
+			{
+				setLanguage("properties/polish.properties");
+
+				initTables();
+				initMenu();
+				initToolBar();
+
+				loadFiles(0, leftPath); // 0 for left
+				loadFiles(1, rightPath); // 1 for right
+			}
+		});
+	}
+
+	private void englishMenuItemListener()
+	{
+		englishMenuItem.setOnAction(new EventHandler<ActionEvent>()
+		{
+			@Override
+			public void handle(ActionEvent event)
+			{
+				setLanguage("properties/english.properties");
+
+				initTables();
+				initMenu();
+				initToolBar();
+
+				loadFiles(0, leftPath); // 0 for left
+				loadFiles(1, rightPath); // 1 for right
+			}
+		});
 	}
 
 	private void loadFiles(int leftOrRight, String root)
@@ -135,22 +223,55 @@ public class MainPaneController implements Initializable
 		SystemFile rootFile;
 		List<SystemFile> systemFileList = new ArrayList<>();
 
-		rootFile = new SystemFile(new File(root));
+		// creating new SystemFile
+		rootFile = new SystemFile(new File(root), properties);
 		if (rootFile.exists() && rootFile.isDirectory())
 		{
-			systemFileList = rootFile.listSystemFiles();
+			systemFileList = rootFile.listSystemFiles(properties);
 		}
 
+		// deciding to which table write
 		TableView<SystemFile> table;
 		if (leftOrRight == 0)
 			table = leftTableView;
 		else
 			table = rightTableView;
 
-		// TODO - Add root folder
+		// adding files to observable list
 		ObservableList<SystemFile> observableList = FXCollections.observableArrayList(systemFileList);
-//		observableList.stream().forEach(System.out::println);
+
+		// setting root file
+		String rootParentName = rootFile.getFile().getParent();
+		SystemFile parentFile;
+		if (rootParentName != null)
+		{
+			parentFile = new SystemFile(new File(rootParentName), properties);
+			parentFile.setFileName(rootParentName);
+		} else
+		{
+			parentFile = rootFile;
+			parentFile.setFileName("");
+		}
+		parentFile.setLastModified("");
+		parentFile.setFileType("");
+		parentFile.setSize("");
+		ImageView imageView = new ImageView(new Image("resource/folderBack.png"));
+		imageView.setFitHeight(20);
+		imageView.setFitWidth(20);
+		parentFile.setImage(imageView);
+
+		// adding root file and other files to tables
+		observableList.add(0, parentFile);
 		table.setItems(observableList);
+
+		// adding path to text box
+		TextField textField;
+		if (leftOrRight == 0)
+			textField = leftPathTextField;
+		else
+			textField = rightPathTextField;
+
+		textField.setText(root);
 	}
 
 	private void initMenu()
@@ -175,6 +296,8 @@ public class MainPaneController implements Initializable
 		{
 			moveLabel.setText(properties.getProperty("move-label"));
 			copyLabel.setText(properties.getProperty("copy-label"));
+			leftPathLabel.setText(properties.getProperty("path-label"));
+			rightPathLabel.setText(properties.getProperty("path-label"));
 		} catch (Exception e)
 		{
 			e.printStackTrace();
@@ -210,9 +333,7 @@ public class MainPaneController implements Initializable
 					properties.getProperty("modified-column"));
 			modifiedColumn.setCellValueFactory(new PropertyValueFactory<>("lastModified"));
 			modifiedColumn.prefWidthProperty().bind(leftTableView.widthProperty().divide(5));
-			
-			
-			
+
 			TableColumn<SystemFile, ImageView> iconColumnR = new TableColumn<SystemFile, ImageView>();
 			iconColumnR.setCellValueFactory(new PropertyValueFactory<>("image"));
 			iconColumnR.setMinWidth(30);
@@ -238,6 +359,11 @@ public class MainPaneController implements Initializable
 					properties.getProperty("modified-column"));
 			modifiedColumnR.setCellValueFactory(new PropertyValueFactory<>("lastModified"));
 			modifiedColumnR.prefWidthProperty().bind(leftTableView.widthProperty().divide(5));
+
+			if (leftTableView.getColumns().size() > 0)
+				leftTableView.getColumns().clear();
+			if (rightTableView.getColumns().size() > 0)
+				rightTableView.getColumns().clear();
 
 			leftTableView.getColumns().add(iconColumn);
 			leftTableView.getColumns().add(nameColumn);

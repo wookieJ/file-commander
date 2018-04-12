@@ -21,8 +21,8 @@
                      <items>
                         <Menu id="languageMenu" fx:id="languageMenu" mnemonicParsing="false" text="Language">
                           <items>
-                            <MenuItem id="polishMenuItem" mnemonicParsing="false" text="Polski" />
-                              <MenuItem id="englishMenuItem" mnemonicParsing="false" text="English" />
+                            <MenuItem id="polishMenuItem" fx:id="polishMenuItem" mnemonicParsing="false" text="Polski" />
+                              <MenuItem id="englishMenuItem" fx:id="englishMenuItem" mnemonicParsing="false" text="English" />
                           </items>
                         </Menu>
                      </items>
@@ -96,13 +96,25 @@
                <items>
                   <VBox alignment="CENTER">
                      <children>
-                        <TextField fx:id="leftPathTextField" maxWidth="1.7976931348623157E308" />
+                        <AnchorPane>
+                           <children>
+                              <Label fx:id="leftPathLabel" alignment="CENTER" text="Path:" textAlignment="CENTER" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0" />
+                              <TextField fx:id="leftPathTextField" maxWidth="1.7976931348623157E308" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="30.0" />
+                              <Button fx:id="leftPathButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" AnchorPane.rightAnchor="5.0" />
+                           </children>
+                        </AnchorPane>
                         <TableView fx:id="leftTableView" VBox.vgrow="ALWAYS" />
                      </children>
                   </VBox>
                   <VBox>
                      <children>
-                        <TextField fx:id="rightPathTextField" maxWidth="1.7976931348623157E308" />
+                        <AnchorPane>
+                           <children>
+                              <Label fx:id="rightPathLabel" alignment="CENTER" text="Path:" textAlignment="CENTER" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0" />
+                              <TextField fx:id="rightPathTextField" maxWidth="1.7976931348623157E308" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="30.0" />
+                              <Button fx:id="rightPathButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" AnchorPane.rightAnchor="5.0" />
+                           </children>
+                        </AnchorPane>
                         <TableView fx:id="rightTableView" VBox.vgrow="ALWAYS" />
                      </children>
                   </VBox>
