@@ -34,6 +34,14 @@
 #copy-right-button {
     -fx-background-image: url("../resource/next.png");
 }
+
+#search-left-button {
+    -fx-background-image: url("../resource/search.png");
+}
+
+#search-right-button {
+    -fx-background-image: url("../resource/search.png");
+}
  
 .button{
     -fx-background-repeat: no-repeat;

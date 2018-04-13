@@ -1,5 +1,6 @@
 package controller;
 
+import java.awt.Desktop;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -29,10 +30,11 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import model.SystemFile;
+import model.TypeOfFile;
 
 public class MainPaneController implements Initializable
 {
-	private static final String INITIAL_PATH = "C:/Users/£ukasz/Desktop";
+	private static final String INITIAL_PATH = "C:/";
 
 	private Properties properties;
 	private String leftPath;
@@ -49,9 +51,6 @@ public class MainPaneController implements Initializable
 
 	@FXML
 	private Button newFolderButton;
-
-	@FXML
-	private Button copyButton1;
 
 	@FXML
 	private Label rightLabel;
@@ -90,13 +89,13 @@ public class MainPaneController implements Initializable
 	private Button moveToRightButton;
 
 	@FXML
+	private Button copyToLeftButton;
+
+	@FXML
 	private Menu fileMenu;
 
 	@FXML
 	private TableView<SystemFile> leftTableView;
-
-	@FXML
-	private Button copyButton;
 
 	@FXML
 	private Menu helpMenu;
@@ -123,12 +122,15 @@ public class MainPaneController implements Initializable
 	private Button leftPathButton;
 
 	@FXML
+	private Button copyToRightButton;
+
+	@FXML
 	private Button newFileButton;
 
 	public MainPaneController()
 	{
 		properties = new Properties();
-		setLanguage("properties/default.properties");
+		setLanguageProperties("properties/default.properties");
 
 		leftPath = INITIAL_PATH;
 		rightPath = INITIAL_PATH;
@@ -137,17 +139,30 @@ public class MainPaneController implements Initializable
 	@Override
 	public void initialize(URL location, ResourceBundle resources)
 	{
-		initTables();
-		initMenu();
-		initToolBar();
+		initTablesLabels();
+		initMenuLabels();
+		initToolBarLabels();
 
 		loadFiles(0, leftPath); // 0 for left
 		loadFiles(1, rightPath); // 1 for right
 
-		englishMenuItemListener();
-		polishMenuItemListener();
-
+		langugeMenuItemListener();
 		tablesListener();
+
+		copyFilesInit();
+	}
+
+	private void copyFilesInit()
+	{
+		copyToLeftButton.setOnAction(new EventHandler<ActionEvent>()
+		{
+			@Override
+			public void handle(ActionEvent event)
+			{
+				SystemFile selectedFile = leftTableView.getSelectionModel().getSelectedItem();
+				System.out.println(selectedFile);
+			}
+		});
 	}
 
 	private void tablesListener()
@@ -159,8 +174,25 @@ public class MainPaneController implements Initializable
 			{
 				if (event.getClickCount() == 2)
 				{
-					leftPath = leftTableView.getSelectionModel().getSelectedItem().getFile().getAbsolutePath();
-					loadFiles(0, leftPath); // 0 for left
+					SystemFile selectedFile = leftTableView.getSelectionModel().getSelectedItem();
+
+					// if file is directory, it turns into next root file
+					if (selectedFile.isDirectory())
+					{
+						leftPath = selectedFile.getFile().getAbsolutePath();
+						loadFiles(0, leftPath); // 0 for left
+					}
+					// otherwise open it in default desktop program
+					else
+					{
+						try
+						{
+							Desktop.getDesktop().open(selectedFile.getFile());
+						} catch (IOException e)
+						{
+							e.printStackTrace();
+						}
+					}
 				}
 			}
 		});
@@ -172,44 +204,58 @@ public class MainPaneController implements Initializable
 			{
 				if (event.getClickCount() == 2)
 				{
-					rightPath = rightTableView.getSelectionModel().getSelectedItem().getFile().getAbsolutePath();
-					loadFiles(1, rightPath); // 1 for right
+					SystemFile selectedFile = rightTableView.getSelectionModel().getSelectedItem();
+
+					// if file is directory, it turns into next root file
+					if (selectedFile.isDirectory())
+					{
+						rightPath = selectedFile.getFile().getAbsolutePath();
+						loadFiles(1, rightPath); // 1 for right
+					}
+					// otherwise open it in default desktop program
+					else
+					{
+						try
+						{
+							Desktop.getDesktop().open(selectedFile.getFile());
+						} catch (IOException e)
+						{
+							e.printStackTrace();
+						}
+					}
 				}
 			}
 		});
 	}
 
-	private void polishMenuItemListener()
+	private void langugeMenuItemListener()
 	{
 		polishMenuItem.setOnAction(new EventHandler<ActionEvent>()
 		{
 			@Override
 			public void handle(ActionEvent event)
 			{
-				setLanguage("properties/polish.properties");
+				setLanguageProperties("properties/polish.properties");
 
-				initTables();
-				initMenu();
-				initToolBar();
+				initTablesLabels();
+				initMenuLabels();
+				initToolBarLabels();
 
 				loadFiles(0, leftPath); // 0 for left
 				loadFiles(1, rightPath); // 1 for right
 			}
 		});
-	}
 
-	private void englishMenuItemListener()
-	{
 		englishMenuItem.setOnAction(new EventHandler<ActionEvent>()
 		{
 			@Override
 			public void handle(ActionEvent event)
 			{
-				setLanguage("properties/english.properties");
+				setLanguageProperties("properties/english.properties");
 
-				initTables();
-				initMenu();
-				initToolBar();
+				initTablesLabels();
+				initMenuLabels();
+				initToolBarLabels();
 
 				loadFiles(0, leftPath); // 0 for left
 				loadFiles(1, rightPath); // 1 for right
@@ -219,7 +265,6 @@ public class MainPaneController implements Initializable
 
 	private void loadFiles(int leftOrRight, String root)
 	{
-		// TODO - Path traversal
 		SystemFile rootFile;
 		List<SystemFile> systemFileList = new ArrayList<>();
 
@@ -254,6 +299,7 @@ public class MainPaneController implements Initializable
 		}
 		parentFile.setLastModified("");
 		parentFile.setFileType("");
+		parentFile.setTypeOfFile(TypeOfFile.ROOT); 
 		parentFile.setSize("");
 		ImageView imageView = new ImageView(new Image("resource/folderBack.png"));
 		imageView.setFitHeight(20);
@@ -274,7 +320,7 @@ public class MainPaneController implements Initializable
 		textField.setText(root);
 	}
 
-	private void initMenu()
+	private void initMenuLabels()
 	{
 		try
 		{
@@ -290,7 +336,7 @@ public class MainPaneController implements Initializable
 		}
 	}
 
-	private void initToolBar()
+	private void initToolBarLabels()
 	{
 		try
 		{
@@ -304,7 +350,7 @@ public class MainPaneController implements Initializable
 		}
 	}
 
-	private void initTables()
+	private void initTablesLabels()
 	{
 		try
 		{
@@ -382,7 +428,7 @@ public class MainPaneController implements Initializable
 		}
 	}
 
-	public void setLanguage(String filePath)
+	public void setLanguageProperties(String filePath)
 	{
 		InputStream input = null;
 		try

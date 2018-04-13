@@ -58,9 +58,9 @@
                             <Button id="move-left-button" fx:id="moveToLeftButton" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" />
                               <Label fx:id="moveLabel" text="Move" />
                               <Button id="move-right-button" fx:id="moveToRightButton" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" />
-                              <Button id="copy-left-button" fx:id="copyButton" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" />
+                              <Button id="copy-left-button" fx:id="copyToLeftButton" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" />
                               <Label fx:id="copyLabel" text="Copy" />
-                              <Button id="copy-right-button" fx:id="copyButton1" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" />
+                              <Button id="copy-right-button" fx:id="copyToRightButton" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" />
                            </children>
                         </HBox>
                      </children>
@@ -100,7 +100,7 @@
                            <children>
                               <Label fx:id="leftPathLabel" alignment="CENTER" text="Path:" textAlignment="CENTER" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0" />
                               <TextField fx:id="leftPathTextField" maxWidth="1.7976931348623157E308" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="30.0" />
-                              <Button fx:id="leftPathButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" AnchorPane.rightAnchor="5.0" />
+                              <Button id="search-left-button" fx:id="leftPathButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" AnchorPane.rightAnchor="5.0" />
                            </children>
                         </AnchorPane>
                         <TableView fx:id="leftTableView" VBox.vgrow="ALWAYS" />
@@ -112,7 +112,7 @@
                            <children>
                               <Label fx:id="rightPathLabel" alignment="CENTER" text="Path:" textAlignment="CENTER" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0" />
                               <TextField fx:id="rightPathTextField" maxWidth="1.7976931348623157E308" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="30.0" />
-                              <Button fx:id="rightPathButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" AnchorPane.rightAnchor="5.0" />
+                              <Button id="search-right-button" fx:id="rightPathButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" AnchorPane.rightAnchor="5.0" />
                            </children>
                         </AnchorPane>
                         <TableView fx:id="rightTableView" VBox.vgrow="ALWAYS" />

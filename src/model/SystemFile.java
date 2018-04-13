@@ -22,7 +22,7 @@ public class SystemFile
 	private SimpleStringProperty fileType;
 	private String lastModified;
 	private Date lastModifiedDate;
-	
+	private TypeOfFile typeOfFile;
 
 	public File getFile()
 	{
@@ -83,7 +83,7 @@ public class SystemFile
 	{
 		this.lastModified = lastModified;
 	}
-	
+
 	public Date getLastModifiedDate()
 	{
 		return lastModifiedDate;
@@ -94,6 +94,16 @@ public class SystemFile
 		this.lastModifiedDate = lastModifiedDate;
 	}
 
+	public TypeOfFile getTypeOfFile()
+	{
+		return typeOfFile;
+	}
+
+	public void setTypeOfFile(TypeOfFile typeOfFile)
+	{
+		this.typeOfFile = typeOfFile;
+	}
+
 	public SystemFile(File file, Properties properties)
 	{
 		try
@@ -101,15 +111,15 @@ public class SystemFile
 			if (file.exists())
 			{
 				this.file = file;
-				
+
 				// data format
 				SimpleDateFormat sdf = new SimpleDateFormat(properties.getProperty("date-formater"));
 				this.lastModifiedDate = new Date(file.lastModified());
-				if(file.lastModified() != 0)
+				if (file.lastModified() != 0)
 					this.lastModified = sdf.format(lastModifiedDate);
 				else
 					this.lastModified = "";
-				
+
 				// setting size of file
 				if (file.isFile())
 				{
@@ -117,18 +127,18 @@ public class SystemFile
 					if (size < 1024)
 						this.size = new SimpleStringProperty(String.valueOf(size) + "B");
 					else if (size < 1_024_000)
-						this.size = new SimpleStringProperty((String.format("%.1f", (double)size / 1_024)) + "kB");
+						this.size = new SimpleStringProperty((String.format("%.1f", (double) size / 1_024)) + "kB");
 					else if (size < 1_024_000_000)
-						this.size = new SimpleStringProperty((String.format("%.1f", (double)size / 1_024_000)) + "MB");
+						this.size = new SimpleStringProperty((String.format("%.1f", (double) size / 1_024_000)) + "MB");
 					else
-						this.size = new SimpleStringProperty((String.format("%.1f", (double)size / 1_024_000_000)) + "GB");
+						this.size = new SimpleStringProperty(
+								(String.format("%.1f", (double) size / 1_024_000_000)) + "GB");
 				} else
 					this.size = new SimpleStringProperty("");
-				
+
 				// setting name of file
 				this.fileName = new SimpleStringProperty(file.getName());
 
-				
 				// setting image from icon
 				// ImageIcon icon = (ImageIcon)
 				// FileSystemView.getFileSystemView().getSystemIcon(file);
@@ -136,18 +146,23 @@ public class SystemFile
 
 				// TODO - Convert file icon into imageView
 				if (file.isDirectory())
-					this.image = new ImageView(new Image("resource/logo.png"));
+					this.image = new ImageView(new Image("resource/folder.png"));
 				else
-					this.image = new ImageView(new Image("resource/newFile.png"));
+					this.image = new ImageView(new Image("resource/file.png"));
 				image.setFitHeight(20);
 				image.setFitWidth(20);
 
 				// setting type of file based of extension
 				if (file.isFile())
-					this.fileType = new SimpleStringProperty(
-							properties.getProperty("file") + " " + file.getName().substring(file.getName().lastIndexOf(".") + 1));
-				else
+				{
+					this.fileType = new SimpleStringProperty(properties.getProperty("file") + " "
+							+ file.getName().substring(file.getName().lastIndexOf(".") + 1));
+					this.typeOfFile = TypeOfFile.FILE;
+				} else
+				{
 					this.fileType = new SimpleStringProperty(properties.getProperty("folder"));
+					this.typeOfFile = TypeOfFile.FOLDER;
+				}
 			}
 		} catch (FileNotFoundException e)
 		{
@@ -158,11 +173,14 @@ public class SystemFile
 		}
 	}
 
+	
+
 	@Override
 	public String toString()
 	{
-		return "SystemFile [file=" + file.getPath() + ", size=" + size + ", lastModified=" + lastModified
-				+ ", fileType=" + fileType + "]";
+		return "SystemFile [file=" + file + ", image=" + image + ", fileName=" + fileName + ", size=" + size
+				+ ", fileType=" + fileType + ", lastModified=" + lastModified + ", lastModifiedDate=" + lastModifiedDate
+				+ ", typeOfFile=" + typeOfFile + "]";
 	}
 
 	/**
