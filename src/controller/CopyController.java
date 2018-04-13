@@ -139,8 +139,6 @@ public class CopyController implements Initializable
 			this.targetDir = targetDir;
 
 			this.progressBar.setPrefWidth(primaryStage.getWidth() - 35);
-			// this.statusArea.setPrefHeight(0);
-			// this.statusArea.setMaxHeight(0);
 
 			File rightTableRootFile = new File(targetDir.toString());
 			File selectedFile = new File(sourceDir.toString());
@@ -148,12 +146,6 @@ public class CopyController implements Initializable
 			if (Arrays.stream(rightTableRootFile.listFiles()).filter(f -> f.getName().equals(selectedFile.getName()))
 					.count() <= 0)
 			{
-				// directly copying
-				System.out.println("Doesn't contain!");
-				// Path toPath = new File(targetDir.toString() + "/" +
-				// sourceDir.getFileName()).toPath();
-				// Files.copy(sourceDir, toPath);
-				// yesButton.setDisable(true);
 				noButton.setDisable(true);
 				cancelButton.setOnAction(e ->
 				{
@@ -166,8 +158,6 @@ public class CopyController implements Initializable
 				copyRoutine(false);
 			} else
 			{
-				// button action
-				System.out.println("Contains");
 				buttonsInit();
 			}
 
@@ -197,10 +187,7 @@ public class CopyController implements Initializable
 	private void copyRoutine(boolean overwriting)
 	{
 		File fromFile = new File(sourceDir.toString());
-//		File toFile = new File(targetDir.toString());
 		File newFile = new File(targetDir.toString() + "/" + sourceDir.getFileName());
-		// System.out.println(fromFile);
-		// setting file counter to zero
 		this.copiedFilesCount = 0;
 		this.copiedDirsCount = 0;
 
@@ -240,8 +227,6 @@ public class CopyController implements Initializable
 
 				targetDir = newFile.toPath();
 
-				System.out.println("New Target = " + targetDir);
-
 				Files.walkFileTree(sourceDir, new SimpleFileVisitor<Path>()
 				{
 					/*
@@ -253,32 +238,17 @@ public class CopyController implements Initializable
 						if (isCancelled())
 						{
 
-							// Task's isCancelled() method returns true
-							// when its cancel() is executed; in this app
-							// when the Cancel copy button is clicked.
-							// Here, the files copy is terminated.
 							System.out.println("Cancelled");
 							return FileVisitResult.TERMINATE;
 						}
 
 						Path target = targetDir.resolve(sourceDir.relativize(dir));
 
-						// if (!overwriting && Files.list(target)
-						// .filter(p ->
-						// p.getFileName().equals(dir.getFileName())).count() >
-						// 0) {
-						// System.out.println("There is " + dir + " in " +
-						// target);
-						// return FileVisitResult.SKIP_SUBTREE;
-						// }
-
 						try
 						{
 							Files.copy(dir, target);
 							statusArea.appendText("Directory " + dir + " copied to " + target + "\n");
 							copiedDirsCount++;
-							// Updates the Progess bar using the Task's
-							// updateProgress(workDone, max) method.
 							updateProgress(++currentCounter, dirsCount + filesCount);
 						} catch (FileAlreadyExistsException e)
 						{
@@ -299,27 +269,14 @@ public class CopyController implements Initializable
 					{
 						if (isCancelled())
 						{
-							// Task's isCancelled() method
-							// terminates the files copy.
 							System.out.println("Cancelled");
 							return FileVisitResult.TERMINATE;
 						}
-
-						// if (Files.list(targetDir)
-						// .filter(p ->
-						// p.getFileName().equals(file.getFileName())).count() >
-						// 0) {
-						// System.out.println("There is " + file + " in " +
-						// targetDir);
-						// return FileVisitResult.SKIP_SUBTREE;
-						// }
 
 						Files.copy(file, targetDir.resolve(sourceDir.relativize(file)),
 								StandardCopyOption.REPLACE_EXISTING);
 						statusArea.appendText("File " + file + " copied to " + targetDir + "\n");
 						copiedFilesCount++;
-						// Updates the Progess bar using the Task's
-						// updateProgress(workDone, max) method.
 						updateProgress(++currentCounter, dirsCount + filesCount);
 						return FileVisitResult.CONTINUE;
 					}
@@ -362,7 +319,6 @@ public class CopyController implements Initializable
 		// closing copying window
 		if (!overwriting)
 			primaryStage.close();
-
 	}
 
 	public void textInit()
