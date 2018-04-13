@@ -78,9 +78,6 @@
    </top>
    <bottom>
       <BorderPane BorderPane.alignment="CENTER">
-         <center>
-            <ProgressBar fx:id="progressBar" prefWidth="500.0" progress="0.0" BorderPane.alignment="CENTER" />
-         </center>
          <right>
             <Label fx:id="rightLabel" BorderPane.alignment="CENTER" />
          </right>
