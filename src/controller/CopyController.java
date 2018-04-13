@@ -11,16 +11,8 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
-import com.sun.javafx.tk.quantum.OverlayWarning;
 
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -108,13 +100,13 @@ public class CopyController implements Initializable
 	{
 		String newTargetString = targetDir.toString() + "\\" + sourceDir.getFileName();
 		String actualFilePath = sourceDir.toString();
-		
+
 		// checking if not trying to copy to the same directory path
 		if (newTargetString.equals(actualFilePath))
 		{
 			return;
 		}
-		
+
 		// Load root layout from fxml file.
 		FXMLLoader loader = new FXMLLoader();
 		BorderPane rootLayout = null;
@@ -163,6 +155,13 @@ public class CopyController implements Initializable
 				// Files.copy(sourceDir, toPath);
 				// yesButton.setDisable(true);
 				noButton.setDisable(true);
+				cancelButton.setOnAction(e ->
+				{
+					if (copyTask != null)
+					{
+						copyTask.cancel();
+					}
+				});
 				cancelButton.setDisable(false);
 				copyRoutine(false);
 			} else
@@ -184,6 +183,13 @@ public class CopyController implements Initializable
 
 	private void buttonsInit()
 	{
+		cancelButton.setOnAction(e ->
+		{
+			if (copyTask != null)
+			{
+				copyTask.cancel();
+			}
+		});
 		cancelButton.setDisable(true);
 		yesButton.setOnAction(e -> copyRoutine(true));
 	}
@@ -191,7 +197,7 @@ public class CopyController implements Initializable
 	private void copyRoutine(boolean overwriting)
 	{
 		File fromFile = new File(sourceDir.toString());
-		File toFile = new File(targetDir.toString());
+//		File toFile = new File(targetDir.toString());
 		File newFile = new File(targetDir.toString() + "/" + sourceDir.getFileName());
 		// System.out.println(fromFile);
 		// setting file counter to zero
@@ -251,6 +257,7 @@ public class CopyController implements Initializable
 							// when its cancel() is executed; in this app
 							// when the Cancel copy button is clicked.
 							// Here, the files copy is terminated.
+							System.out.println("Cancelled");
 							return FileVisitResult.TERMINATE;
 						}
 
@@ -294,6 +301,7 @@ public class CopyController implements Initializable
 						{
 							// Task's isCancelled() method
 							// terminates the files copy.
+							System.out.println("Cancelled");
 							return FileVisitResult.TERMINATE;
 						}
 
