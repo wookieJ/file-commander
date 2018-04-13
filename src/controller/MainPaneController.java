@@ -6,29 +6,22 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.ResourceBundle;
 
-import com.sun.glass.ui.CommonDialogs.Type;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -36,9 +29,6 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
-import javafx.stage.Stage;
 import model.SystemFile;
 import model.TypeOfFile;
 
@@ -79,9 +69,6 @@ public class MainPaneController implements Initializable
 
 	@FXML
 	private Label copyLabel;
-
-	@FXML
-	private ProgressBar progressBar;
 
 	@FXML
 	private Label leftPathLabel;
@@ -138,6 +125,7 @@ public class MainPaneController implements Initializable
 	private Button newFileButton;
 
 	private CopyController copyController;
+//	private Task<Void> copyTask;
 
 	public MainPaneController()
 	{
@@ -152,7 +140,7 @@ public class MainPaneController implements Initializable
 	public void initialize(URL location, ResourceBundle resources)
 	{
 		copyController = new CopyController(properties);
-		
+
 		initTablesLabels();
 		initMenuLabels();
 		initToolBarLabels();
@@ -223,16 +211,17 @@ public class MainPaneController implements Initializable
 				SystemFile selectedFile = leftTableView.getSelectionModel().getSelectedItem();
 				if (selectedFile != null && selectedFile.getTypeOfFile() != TypeOfFile.ROOT)
 				{
-					// creating new stage - copying box
+
+					// TODO - directly copying
 					try
 					{
 						copyController.create(selectedFile.toPath(), new File(rightPath).toPath());
 					} catch (IOException e)
 					{
+						// TODO Auto-generated catch block
 						e.printStackTrace();
-						return;
 					}
-					 
+
 					/*
 					 * This method can be used with the walkFileTree method to
 					 * copy a directory and all entries in the directory, or an
@@ -344,7 +333,7 @@ public class MainPaneController implements Initializable
 
 				loadFiles(0, leftPath); // 0 for left
 				loadFiles(1, rightPath); // 1 for right
-				
+
 				copyController = new CopyController(properties);
 			}
 		});
@@ -362,13 +351,13 @@ public class MainPaneController implements Initializable
 
 				loadFiles(0, leftPath); // 0 for left
 				loadFiles(1, rightPath); // 1 for right
-				
+
 				copyController = new CopyController(properties);
 			}
 		});
 	}
 
-	private void loadFiles(int leftOrRight, String root)
+	public void loadFiles(int leftOrRight, String root)
 	{
 		SystemFile rootFile;
 		List<SystemFile> systemFileList = new ArrayList<>();

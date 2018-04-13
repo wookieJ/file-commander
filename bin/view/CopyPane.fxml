@@ -6,11 +6,11 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane prefHeight="235.0" prefWidth="411.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.CopyController">
+<BorderPane prefHeight="377.0" prefWidth="667.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.CopyController">
    <bottom>
       <VBox alignment="CENTER" BorderPane.alignment="CENTER">
          <children>
-            <ProgressBar fx:id="progressBar" prefWidth="200.0" progress="0.0">
+            <ProgressBar fx:id="progressBar" prefHeight="27.0" prefWidth="373.0" progress="0.0">
                <padding>
                   <Insets bottom="3.0" top="6.0" />
                </padding>

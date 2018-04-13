@@ -1,12 +1,28 @@
 package controller;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
+import com.sun.javafx.tk.quantum.OverlayWarning;
+
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -23,6 +39,7 @@ import javafx.stage.Stage;
 public class CopyController implements Initializable
 {
 	private Properties properties;
+	private Stage primaryStage;
 
 	@FXML
 	private TextArea statusArea;
@@ -47,8 +64,6 @@ public class CopyController implements Initializable
 	private Task<Void> copyTask;
 	private int copiedFilesCount;
 	private int copiedDirsCount;
-
-	private static Logger logger;
 
 	public Path getSourceDir()
 	{
@@ -83,10 +98,6 @@ public class CopyController implements Initializable
 	public CopyController(Properties properties)
 	{
 		this.properties = properties;
-		logger = Logger.getLogger("copy_app_logger");
-		// TextAreaLogHandler handler = new TextAreaLogHandler(statusArea);
-		// logger.addHandler(handler);
-		// fileFiltersDialog = new FileFilterDialog();
 	}
 
 	public CopyController()
@@ -95,6 +106,15 @@ public class CopyController implements Initializable
 
 	public void create(Path sourceDir, Path targetDir) throws IOException
 	{
+		String newTargetString = targetDir.toString() + "\\" + sourceDir.getFileName();
+		String actualFilePath = sourceDir.toString();
+		
+		// checking if not trying to copy to the same directory path
+		if (newTargetString.equals(actualFilePath))
+		{
+			return;
+		}
+		
 		// Load root layout from fxml file.
 		FXMLLoader loader = new FXMLLoader();
 		BorderPane rootLayout = null;
@@ -106,7 +126,7 @@ public class CopyController implements Initializable
 			e.printStackTrace();
 		}
 
-		Stage primaryStage = new Stage();
+		this.primaryStage = new Stage();
 		Scene scene = new Scene(rootLayout);
 		primaryStage.setScene(scene);
 		primaryStage.getIcons().add(new Image("/resource/logo.png"));
@@ -125,31 +145,227 @@ public class CopyController implements Initializable
 			this.noButton = copyController.noButton;
 			this.sourceDir = sourceDir;
 			this.targetDir = targetDir;
-			
+
+			this.progressBar.setPrefWidth(primaryStage.getWidth() - 35);
+			// this.statusArea.setPrefHeight(0);
+			// this.statusArea.setMaxHeight(0);
+
+			File rightTableRootFile = new File(targetDir.toString());
+			File selectedFile = new File(sourceDir.toString());
+			// checing if right table contains file we want to copy
+			if (Arrays.stream(rightTableRootFile.listFiles()).filter(f -> f.getName().equals(selectedFile.getName()))
+					.count() <= 0)
+			{
+				// directly copying
+				System.out.println("Doesn't contain!");
+				// Path toPath = new File(targetDir.toString() + "/" +
+				// sourceDir.getFileName()).toPath();
+				// Files.copy(sourceDir, toPath);
+				// yesButton.setDisable(true);
+				noButton.setDisable(true);
+				cancelButton.setDisable(false);
+				copyRoutine(false);
+			} else
+			{
+				// button action
+				System.out.println("Contains");
+				buttonsInit();
+			}
+
 			textInit();
-			buttonsInit();
-		}
-		else if(copyController == null)
+
+		} else if (copyController == null)
 			throw new IOException("copyController is null!");
-		else if(sourceDir == null)
+		else if (sourceDir == null)
 			throw new IOException("sourceDir is null!");
-		else if(targetDir == null)
+		else if (targetDir == null)
 			throw new IOException("targetDir is null!");
 	}
 
 	private void buttonsInit()
 	{
-		
+		cancelButton.setDisable(true);
+		yesButton.setOnAction(e -> copyRoutine(true));
+	}
+
+	private void copyRoutine(boolean overwriting)
+	{
+		File fromFile = new File(sourceDir.toString());
+		File toFile = new File(targetDir.toString());
+		File newFile = new File(targetDir.toString() + "/" + sourceDir.getFileName());
+		// System.out.println(fromFile);
+		// setting file counter to zero
+		this.copiedFilesCount = 0;
+		this.copiedDirsCount = 0;
+
+		copyTask = new Task<Void>()
+		{
+			int currentCounter;
+			int dirsCount = 0;
+			int filesCount = 0;
+
+			@Override
+			protected Void call() throws Exception
+			{
+
+				Platform.runLater(() ->
+				{
+					yesButton.setDisable(true);
+					noButton.setDisable(true);
+					cancelButton.setDisable(false);
+				});
+
+				if (fromFile.isDirectory())
+				{
+					dirsCount = (int) Arrays.stream(fromFile.listFiles()).filter(f -> f.isDirectory()).count();
+					filesCount = fromFile.listFiles().length - dirsCount;
+				}
+
+				Thread.sleep(100); // pause for n milliseconds
+
+				if (!newFile.exists())
+				{
+					if (fromFile.isDirectory())
+					{
+						newFile.mkdir();
+					} else
+						newFile.createNewFile();
+				}
+
+				targetDir = newFile.toPath();
+
+				System.out.println("New Target = " + targetDir);
+
+				Files.walkFileTree(sourceDir, new SimpleFileVisitor<Path>()
+				{
+					/*
+					 * Copy the directories.
+					 */
+					@Override
+					public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException
+					{
+						if (isCancelled())
+						{
+
+							// Task's isCancelled() method returns true
+							// when its cancel() is executed; in this app
+							// when the Cancel copy button is clicked.
+							// Here, the files copy is terminated.
+							return FileVisitResult.TERMINATE;
+						}
+
+						Path target = targetDir.resolve(sourceDir.relativize(dir));
+
+						// if (!overwriting && Files.list(target)
+						// .filter(p ->
+						// p.getFileName().equals(dir.getFileName())).count() >
+						// 0) {
+						// System.out.println("There is " + dir + " in " +
+						// target);
+						// return FileVisitResult.SKIP_SUBTREE;
+						// }
+
+						try
+						{
+							Files.copy(dir, target);
+							statusArea.appendText("Directory " + dir + " copied to " + target + "\n");
+							copiedDirsCount++;
+							// Updates the Progess bar using the Task's
+							// updateProgress(workDone, max) method.
+							updateProgress(++currentCounter, dirsCount + filesCount);
+						} catch (FileAlreadyExistsException e)
+						{
+							System.out.println("File exist");
+							if (!Files.isDirectory(target))
+							{
+								throw e;
+							}
+						}
+						return FileVisitResult.CONTINUE;
+					}
+
+					/*
+					 * Copy the files.
+					 */
+					@Override
+					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
+					{
+						if (isCancelled())
+						{
+							// Task's isCancelled() method
+							// terminates the files copy.
+							return FileVisitResult.TERMINATE;
+						}
+
+						// if (Files.list(targetDir)
+						// .filter(p ->
+						// p.getFileName().equals(file.getFileName())).count() >
+						// 0) {
+						// System.out.println("There is " + file + " in " +
+						// targetDir);
+						// return FileVisitResult.SKIP_SUBTREE;
+						// }
+
+						Files.copy(file, targetDir.resolve(sourceDir.relativize(file)),
+								StandardCopyOption.REPLACE_EXISTING);
+						statusArea.appendText("File " + file + " copied to " + targetDir + "\n");
+						copiedFilesCount++;
+						// Updates the Progess bar using the Task's
+						// updateProgress(workDone, max) method.
+						updateProgress(++currentCounter, dirsCount + filesCount);
+						return FileVisitResult.CONTINUE;
+					}
+				});
+				return null;
+			}
+		};
+
+		progressBar.progressProperty().bind(copyTask.progressProperty());
+		new Thread(copyTask).start(); // Run the copy task
+
+		copyTask.setOnFailed(e ->
+		{
+			Throwable t = copyTask.getException();
+			String message = (t != null) ? t.toString() : "Unknown Exception!\n";
+			statusArea.appendText("There was an error during the copy process:\n");
+			statusArea.appendText(message);
+			doTaskEventCloseRoutine(copyTask, overwriting);
+			t.printStackTrace();
+		});
+
+		copyTask.setOnCancelled(e ->
+		{
+			statusArea.appendText("Copy is cancelled by user.\n");
+			doTaskEventCloseRoutine(copyTask, overwriting);
+		});
+
+		copyTask.setOnSucceeded(e ->
+		{
+			statusArea.appendText(
+					"Copy completed. " + "Directories copied [" + ((copiedDirsCount < 1) ? 0 : copiedDirsCount) + "], "
+							+ "Files copied [" + copiedFilesCount + "]\n");
+
+			doTaskEventCloseRoutine(copyTask, overwriting);
+		});
+	}
+
+	private void doTaskEventCloseRoutine(Task<Void> copyTask2, boolean overwriting)
+	{
+		// closing copying window
+		if (!overwriting)
+			primaryStage.close();
+
 	}
 
 	public void textInit()
 	{
-		mainLabel.setText(properties.getProperty("copy-label", "Kopiowanie"));
+		mainLabel.setText(properties.getProperty("copy-label", "Kopiowanie") + " - "
+				+ properties.getProperty("copy-exist-question", "Czy chcesz nadpisaæ pliki?"));
 		yesButton.setText(properties.getProperty("yes-window", "Tak"));
 		noButton.setText(properties.getProperty("no-window", "Nie"));
 		cancelButton.setText(properties.getProperty("cancel-window", "Anuluj"));
 	}
-	
+
 	@Override
 	public void initialize(URL location, ResourceBundle resources)
 	{

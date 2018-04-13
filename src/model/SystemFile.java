@@ -174,14 +174,11 @@ public class SystemFile
 		}
 	}
 
-	
-
 	@Override
 	public String toString()
 	{
-		return "SystemFile [file=" + file + ", image=" + image + ", fileName=" + fileName + ", size=" + size
-				+ ", fileType=" + fileType + ", lastModified=" + lastModified + ", lastModifiedDate=" + lastModifiedDate
-				+ ", typeOfFile=" + typeOfFile + "]";
+		return "SystemFile [file=" + file + ", fileName=" + fileName + ", size=" + size + ", fileType=" + fileType
+				+ ", lastModifiedDate=" + lastModifiedDate + ", typeOfFile=" + typeOfFile + "]";
 	}
 
 	/**
