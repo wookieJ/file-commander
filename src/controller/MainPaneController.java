@@ -6,17 +6,24 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.ResourceBundle;
+
+import com.sun.glass.ui.CommonDialogs.Type;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
@@ -29,12 +36,15 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
+import javafx.stage.Stage;
 import model.SystemFile;
 import model.TypeOfFile;
 
 public class MainPaneController implements Initializable
 {
-	private static final String INITIAL_PATH = "C:/";
+	private static final String INITIAL_PATH = "C:/Users/£ukasz/Desktop/AL test folder";
 
 	private Properties properties;
 	private String leftPath;
@@ -127,6 +137,8 @@ public class MainPaneController implements Initializable
 	@FXML
 	private Button newFileButton;
 
+	private CopyController copyController;
+
 	public MainPaneController()
 	{
 		properties = new Properties();
@@ -139,6 +151,8 @@ public class MainPaneController implements Initializable
 	@Override
 	public void initialize(URL location, ResourceBundle resources)
 	{
+		copyController = new CopyController(properties);
+		
 		initTablesLabels();
 		initMenuLabels();
 		initToolBarLabels();
@@ -148,21 +162,108 @@ public class MainPaneController implements Initializable
 
 		langugeMenuItemListener();
 		tablesListener();
+		textPathSearchInit();
 
 		copyFilesInit();
+
+		// TODO - Sortowanie - nie braæ pod uwagê powracj¹cego elelementu
+		// TODO - Klawiatura - szukanie zatwierdzanie enterem
+		// TODO - Przegl¹danie - zatwierdzanie elementów enterem
+		// TODO - kopia w nowym w¹tku
+		// TODO - dodaæ defaultowe wartoœci properties
 	}
 
-	private void copyFilesInit()
+	private void textPathSearchInit()
 	{
-		copyToLeftButton.setOnAction(new EventHandler<ActionEvent>()
+		leftPathButton.setOnAction(new EventHandler<ActionEvent>()
 		{
 			@Override
 			public void handle(ActionEvent event)
 			{
-				SystemFile selectedFile = leftTableView.getSelectionModel().getSelectedItem();
-				System.out.println(selectedFile);
+				File searchedFile = new File(leftPathTextField.getText());
+				if (searchedFile != null && searchedFile.exists())
+				{
+					SystemFile searchedSystemFile = new SystemFile(searchedFile, properties);
+					if (searchedSystemFile != null && searchedSystemFile.exists())
+					{
+						leftPath = searchedSystemFile.toPath().toString();
+						loadFiles(0, leftPath); // 0 for left
+					}
+				}
 			}
 		});
+
+		rightPathButton.setOnAction(new EventHandler<ActionEvent>()
+		{
+			@Override
+			public void handle(ActionEvent event)
+			{
+				File searchedFile = new File(rightPathTextField.getText());
+				if (searchedFile != null && searchedFile.exists())
+				{
+					SystemFile searchedSystemFile = new SystemFile(searchedFile, properties);
+					if (searchedSystemFile != null && searchedSystemFile.exists())
+					{
+						rightPath = searchedSystemFile.toPath().toString();
+						loadFiles(1, rightPath); // 1 for right
+					}
+				}
+			}
+		});
+	}
+
+	private void copyFilesInit()
+	{
+		copyToRightButton.setOnAction(new EventHandler<ActionEvent>()
+		{
+			@Override
+			public void handle(ActionEvent event)
+			{
+				// Getting selected file
+				SystemFile selectedFile = leftTableView.getSelectionModel().getSelectedItem();
+				if (selectedFile != null && selectedFile.getTypeOfFile() != TypeOfFile.ROOT)
+				{
+					// creating new stage - copying box
+					try
+					{
+						copyController.create(selectedFile.toPath(), new File(rightPath).toPath());
+					} catch (IOException e)
+					{
+						e.printStackTrace();
+						return;
+					}
+					 
+					/*
+					 * This method can be used with the walkFileTree method to
+					 * copy a directory and all entries in the directory, or an
+					 * entire file-tree where required.
+					 */
+
+					/*
+					 * UnsupportedOperationException - if the array contains a
+					 * copy option that is not supported
+					 * FileAlreadyExistsException - if the target file exists
+					 * but cannot be replaced because the REPLACE_EXISTING
+					 * option is not specified (optional specific exception)
+					 * DirectoryNotEmptyException - the REPLACE_EXISTING option
+					 * is specified but the file cannot be replaced because it
+					 * is a non-empty directory (optional specific exception)
+					 * IOException - if an I/O error occursSecurityException -
+					 * In the case of the default provider, and a security
+					 * manager is installed, the checkRead method is invoked to
+					 * check read access to the source file, the checkWrite is
+					 * invoked to check write access to the target file. If a
+					 * symbolic link is copied the security manager is invoked
+					 * to check LinkPermission("symbolic").
+					 */
+				}
+			}
+
+		});
+	}
+
+	private void createNewFile(SystemFile selectedFile) throws IOException
+	{
 	}
 
 	private void tablesListener()
@@ -243,6 +344,8 @@ public class MainPaneController implements Initializable
 
 				loadFiles(0, leftPath); // 0 for left
 				loadFiles(1, rightPath); // 1 for right
+				
+				copyController = new CopyController(properties);
 			}
 		});
 
@@ -259,6 +362,8 @@ public class MainPaneController implements Initializable
 
 				loadFiles(0, leftPath); // 0 for left
 				loadFiles(1, rightPath); // 1 for right
+				
+				copyController = new CopyController(properties);
 			}
 		});
 	}
@@ -299,7 +404,7 @@ public class MainPaneController implements Initializable
 		}
 		parentFile.setLastModified("");
 		parentFile.setFileType("");
-		parentFile.setTypeOfFile(TypeOfFile.ROOT); 
+		parentFile.setTypeOfFile(TypeOfFile.ROOT);
 		parentFile.setSize("");
 		ImageView imageView = new ImageView(new Image("resource/folderBack.png"));
 		imageView.setFitHeight(20);
