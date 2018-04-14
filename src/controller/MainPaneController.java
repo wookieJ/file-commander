@@ -193,8 +193,6 @@ public class MainPaneController implements Initializable
 		// TODO - Sortowanie - nie braæ pod uwagê powracj¹cego elelementu
 		// TODO - Klawiatura - szukanie zatwierdzanie enterem
 		// TODO - Przegl¹danie - zatwierdzanie elementów enterem
-		// TODO - kopia w nowym w¹tku
-		// TODO - dodaæ defaultowe wartoœci properties
 	}
 
 	private void initBottom()
@@ -255,8 +253,6 @@ public class MainPaneController implements Initializable
 				SystemFile selectedFile = leftTableView.getSelectionModel().getSelectedItem();
 				if (selectedFile != null && selectedFile.getTypeOfFile() != TypeOfFile.ROOT)
 				{
-
-					// TODO - directly copying
 					try
 					{
 						create(selectedFile.toPath(), new File(rightPath).toPath());
@@ -331,7 +327,7 @@ public class MainPaneController implements Initializable
 			Scene scene = new Scene(rootLayout);
 			primaryStage.setScene(scene);
 			primaryStage.getIcons().add(new Image("/resource/logo.png"));
-			primaryStage.setTitle("JCommander - " + properties.getProperty("copy-label"));
+			primaryStage.setTitle("JCommander - " + properties.getProperty("copy-label", "Kopiowanie"));
 			primaryStage.show();
 
 			CopyController copyController = (CopyController) loader.getController();
@@ -503,7 +499,6 @@ public class MainPaneController implements Initializable
 
 						Path target = targetDir.resolve(sourceDir.relativize(file));
 						Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
-						// TODO - opisy, statusy z properties
 						if (overwriting)
 							logger.info(properties.getProperty("file", "Plik") + " " + file + " "
 									+ properties.getProperty("copied-to", "skopiowano do") + " " + targetDir + "\n");
@@ -525,8 +520,8 @@ public class MainPaneController implements Initializable
 		copyTask.setOnFailed(e ->
 		{
 			Throwable t = copyTask.getException();
-			String message = (t != null) ? t.toString() : properties.getProperty("error-label") + "\n";
-			String textMessage = properties.getProperty("error-window") + ":\n";
+			String message = (t != null) ? t.toString() : properties.getProperty("error-label", "B³¹d!") + "\n";
+			String textMessage = properties.getProperty("error-window", "Wyst¹pi³ b³¹d podczas kopiowania.") + ":\n";
 			if (overwriting)
 			{
 				logger.info(textMessage);
@@ -572,7 +567,6 @@ public class MainPaneController implements Initializable
 				rightLabel.setText(properties.getProperty("succeeded-label", "Sukces"));
 			}
 
-			// TODO - zmieniæ etykietê z pytnia na stan - sukces, b³¹d etc.
 			doTaskEventCloseRoutine(copyTask, overwriting);
 		});
 	}
@@ -609,21 +603,24 @@ public class MainPaneController implements Initializable
 				{
 					SystemFile selectedFile = leftTableView.getSelectionModel().getSelectedItem();
 
-					// if file is directory, it turns into next root file
-					if (selectedFile.isDirectory())
+					if (selectedFile != null)
 					{
-						leftPath = selectedFile.getFile().getAbsolutePath();
-						loadFiles(0, leftPath); // 0 for left
-					}
-					// otherwise open it in default desktop program
-					else
-					{
-						try
+						// if file is directory, it turns into next root file
+						if (selectedFile.isDirectory())
 						{
-							Desktop.getDesktop().open(selectedFile.getFile());
-						} catch (IOException e)
+							leftPath = selectedFile.getFile().getAbsolutePath();
+							loadFiles(0, leftPath); // 0 for left
+						}
+						// otherwise open it in default desktop program
+						else
 						{
-							e.printStackTrace();
+							try
+							{
+								Desktop.getDesktop().open(selectedFile.getFile());
+							} catch (IOException e)
+							{
+								e.printStackTrace();
+							}
 						}
 					}
 				}
@@ -759,12 +756,12 @@ public class MainPaneController implements Initializable
 	{
 		try
 		{
-			fileMenu.setText(properties.getProperty("file-menu"));
-			editMenu.setText(properties.getProperty("edit-menu"));
-			languageMenu.setText(properties.getProperty("language-menu"));
-			helpMenu.setText(properties.getProperty("help-menu"));
-			aboutMenuItem.setText(properties.getProperty("about-menuItem"));
-			closeMenuItem.setText(properties.getProperty("close-menuItem"));
+			fileMenu.setText(properties.getProperty("file-menu", "Plik"));
+			editMenu.setText(properties.getProperty("edit-menu", "Edycja"));
+			languageMenu.setText(properties.getProperty("language-menu", "Jêzyk"));
+			helpMenu.setText(properties.getProperty("help-menu", "Pomoc"));
+			aboutMenuItem.setText(properties.getProperty("about-menuItem", "O aplikacji"));
+			closeMenuItem.setText(properties.getProperty("close-menuItem", "Zamknij"));
 		} catch (Exception e)
 		{
 			e.printStackTrace();
@@ -775,10 +772,10 @@ public class MainPaneController implements Initializable
 	{
 		try
 		{
-			moveLabel.setText(properties.getProperty("move-label"));
-			copyLabel.setText(properties.getProperty("copy-label"));
-			leftPathLabel.setText(properties.getProperty("path-label"));
-			rightPathLabel.setText(properties.getProperty("path-label"));
+			moveLabel.setText(properties.getProperty("move-label", "Przenieœ"));
+			copyLabel.setText(properties.getProperty("copy-label", "Kopiuj"));
+			leftPathLabel.setText(properties.getProperty("path-label", "Œcie¿ka:"));
+			rightPathLabel.setText(properties.getProperty("path-label", "Œcie¿ka:"));
 		} catch (Exception e)
 		{
 			e.printStackTrace();
@@ -796,22 +793,22 @@ public class MainPaneController implements Initializable
 			iconColumn.setResizable(false);
 
 			TableColumn<SystemFile, String> nameColumn = new TableColumn<SystemFile, String>(
-					properties.getProperty("name-column"));
+					properties.getProperty("name-column", "Nazwa"));
 			nameColumn.setCellValueFactory(new PropertyValueFactory<>("fileName"));
 			nameColumn.prefWidthProperty().bind(leftTableView.widthProperty().divide(3));
 
 			TableColumn<SystemFile, String> sizeColumn = new TableColumn<SystemFile, String>(
-					properties.getProperty("size-column"));
+					properties.getProperty("size-column", "Rozmiar"));
 			sizeColumn.setCellValueFactory(new PropertyValueFactory<>("size"));
 			sizeColumn.prefWidthProperty().bind(leftTableView.widthProperty().divide(6));
 
 			TableColumn<SystemFile, Object> typeColumn = new TableColumn<SystemFile, Object>(
-					properties.getProperty("type-column"));
+					properties.getProperty("type-column", "Typ"));
 			typeColumn.setCellValueFactory(new PropertyValueFactory<>("fileType"));
 			typeColumn.prefWidthProperty().bind(leftTableView.widthProperty().divide(7));
 
 			TableColumn<SystemFile, String> modifiedColumn = new TableColumn<SystemFile, String>(
-					properties.getProperty("modified-column"));
+					properties.getProperty("modified-column", "Zmodyfikowany"));
 			modifiedColumn.setCellValueFactory(new PropertyValueFactory<>("lastModified"));
 			modifiedColumn.prefWidthProperty().bind(leftTableView.widthProperty().divide(5));
 
@@ -822,22 +819,22 @@ public class MainPaneController implements Initializable
 			iconColumnR.setResizable(false);
 
 			TableColumn<SystemFile, Object> nameColumnR = new TableColumn<SystemFile, Object>(
-					properties.getProperty("name-column"));
+					properties.getProperty("name-column", "Nazwa"));
 			nameColumnR.setCellValueFactory(new PropertyValueFactory<>("fileName"));
 			nameColumnR.prefWidthProperty().bind(leftTableView.widthProperty().divide(3));
 
 			TableColumn<SystemFile, Object> sizeColumnR = new TableColumn<SystemFile, Object>(
-					properties.getProperty("size-column"));
+					properties.getProperty("size-column", "Rozmiar"));
 			sizeColumnR.setCellValueFactory(new PropertyValueFactory<>("size"));
 			sizeColumnR.prefWidthProperty().bind(leftTableView.widthProperty().divide(6));
 
 			TableColumn<SystemFile, Object> typeColumnR = new TableColumn<SystemFile, Object>(
-					properties.getProperty("type-column"));
+					properties.getProperty("type-column", "Typ"));
 			typeColumnR.setCellValueFactory(new PropertyValueFactory<>("fileType"));
 			typeColumnR.prefWidthProperty().bind(leftTableView.widthProperty().divide(7));
 
 			TableColumn<SystemFile, String> modifiedColumnR = new TableColumn<SystemFile, String>(
-					properties.getProperty("modified-column"));
+					properties.getProperty("modified-column", "Zmodyfikowany"));
 			modifiedColumnR.setCellValueFactory(new PropertyValueFactory<>("lastModified"));
 			modifiedColumnR.prefWidthProperty().bind(leftTableView.widthProperty().divide(5));
 
