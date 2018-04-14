@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.Socket;
 import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileVisitResult;
@@ -18,8 +19,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.logging.Logger;
 
 import javafx.application.Platform;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -55,13 +58,13 @@ public class MainPaneController implements Initializable
 	private String leftPath;
 	private String rightPath;
 
-	private CopyController copyController;
 	private Stage primaryStage;
 	private Path sourceDir;
 	private Path targetDir;
 	private Task<Void> copyTask;
 	private int copiedFilesCount;
 	private int copiedDirsCount;
+	private static Logger logger;
 
 	@FXML
 	private TableView<SystemFile> rightTableView;
@@ -92,6 +95,9 @@ public class MainPaneController implements Initializable
 
 	@FXML
 	private Label copyLabel;
+
+	@FXML
+	private ProgressBar bottomProgressBar;
 
 	@FXML
 	private Label leftPathLabel;
@@ -139,6 +145,9 @@ public class MainPaneController implements Initializable
 	private MenuItem polishMenuItem;
 
 	@FXML
+	private Button bottomCancelButton;
+
+	@FXML
 	private Button leftPathButton;
 
 	@FXML
@@ -148,16 +157,12 @@ public class MainPaneController implements Initializable
 	private Button newFileButton;
 
 	private Label mainLabel;
-
 	private Button cancelButton;
-
 	private TextArea statusArea;
-
 	private ProgressBar progressBar;
-
 	private Button yesButton;
-
 	private Button noButton;
+	private Button closeButton;
 
 	public MainPaneController()
 	{
@@ -174,6 +179,7 @@ public class MainPaneController implements Initializable
 		initTablesLabels();
 		initMenuLabels();
 		initToolBarLabels();
+		initBottom();
 
 		loadFiles(0, leftPath); // 0 for left
 		loadFiles(1, rightPath); // 1 for right
@@ -189,6 +195,14 @@ public class MainPaneController implements Initializable
 		// TODO - Przegl¹danie - zatwierdzanie elementów enterem
 		// TODO - kopia w nowym w¹tku
 		// TODO - dodaæ defaultowe wartoœci properties
+	}
+
+	private void initBottom()
+	{
+		bottomCancelButton.setText(properties.getProperty("cancel-window", "Anuluj"));
+		bottomCancelButton.setDisable(true);
+		rightLabel.setText("");
+		leftLabel.setText("");
 	}
 
 	private void textPathSearchInit()
@@ -291,68 +305,80 @@ public class MainPaneController implements Initializable
 			return;
 		}
 
-		// Load root layout from fxml file.
-		FXMLLoader loader = new FXMLLoader();
-		BorderPane rootLayout = null;
-		try
+		File rightTableRootFile = new File(targetDir.toString());
+		File selectedFile = new File(sourceDir.toString());
+
+		this.sourceDir = sourceDir;
+		this.targetDir = targetDir;
+
+		// overwriting existing file(s)
+		if (Arrays.stream(rightTableRootFile.listFiles()).filter(f -> f.getName().equals(selectedFile.getName()))
+				.count() > 0)
 		{
-			rootLayout = loader.load(getClass().getResource("/view/CopyPane.fxml").openStream());
-		} catch (IOException e)
-		{
-			e.printStackTrace();
-		}
 
-		this.primaryStage = new Stage();
-		Scene scene = new Scene(rootLayout);
-		primaryStage.setScene(scene);
-		primaryStage.getIcons().add(new Image("/resource/logo.png"));
-		primaryStage.setTitle("JCommander - " + properties.getProperty("copy-label"));
-		primaryStage.show();
-
-		CopyController copyController = (CopyController) loader.getController();
-
-		if (copyController != null && sourceDir != null && targetDir != null)
-		{
-			this.mainLabel = copyController.getMainLabel();
-			this.cancelButton = copyController.getCancelButton();
-			this.statusArea = copyController.getStatusArea();
-			this.progressBar = copyController.getProgressBar();
-			this.yesButton = copyController.getYesButton();
-			this.noButton = copyController.getNoButton();
-			this.sourceDir = sourceDir;
-			this.targetDir = targetDir;
-
-			this.progressBar.setPrefWidth(primaryStage.getWidth() - 35);
-
-			File rightTableRootFile = new File(targetDir.toString());
-			File selectedFile = new File(sourceDir.toString());
-			// checing if right table contains file we want to copy
-			if (Arrays.stream(rightTableRootFile.listFiles()).filter(f -> f.getName().equals(selectedFile.getName()))
-					.count() <= 0)
+			// Load root layout from fxml file.
+			FXMLLoader loader = new FXMLLoader();
+			BorderPane rootLayout = null;
+			try
 			{
-				noButton.setDisable(true);
-				cancelButton.setOnAction(e ->
-				{
-					if (copyTask != null)
-					{
-						copyTask.cancel();
-					}
-				});
-				cancelButton.setDisable(false);
-				copyRoutine(false);
-			} else
+				rootLayout = loader.load(getClass().getResource("/view/CopyPane.fxml").openStream());
+			} catch (IOException e)
 			{
-				buttonsInit();
+				e.printStackTrace();
 			}
 
-			copyControllerTextInit();
+			this.primaryStage = new Stage();
+			Scene scene = new Scene(rootLayout);
+			primaryStage.setScene(scene);
+			primaryStage.getIcons().add(new Image("/resource/logo.png"));
+			primaryStage.setTitle("JCommander - " + properties.getProperty("copy-label"));
+			primaryStage.show();
 
-		} else if (copyController == null)
-			throw new IOException("copyController is null!");
-		else if (sourceDir == null)
-			throw new IOException("sourceDir is null!");
-		else if (targetDir == null)
-			throw new IOException("targetDir is null!");
+			CopyController copyController = (CopyController) loader.getController();
+
+			if (copyController != null && sourceDir != null && targetDir != null)
+			{
+
+				this.mainLabel = copyController.getMainLabel();
+				this.cancelButton = copyController.getCancelButton();
+				this.statusArea = copyController.getStatusArea();
+				this.progressBar = copyController.getProgressBar();
+				this.yesButton = copyController.getYesButton();
+				this.noButton = copyController.getNoButton();
+				this.closeButton = copyController.getCloseButton();
+				this.progressBar.setPrefWidth(primaryStage.getWidth() - 35);
+
+				buttonsInit();
+				copyControllerTextInit();
+				loggerInit();
+
+			} else if (copyController == null)
+				throw new IOException("copyController is null!");
+			else if (sourceDir == null)
+				throw new IOException("sourceDir is null!");
+			else if (targetDir == null)
+				throw new IOException("targetDir is null!");
+		}
+		// copy new file(s)
+		else
+		{
+			bottomCancelButton.setDisable(false);
+			bottomCancelButton.setOnAction(e ->
+			{
+				if (copyTask != null)
+				{
+					copyTask.cancel();
+				}
+			});
+			copyRoutine(false);
+		}
+	}
+
+	private void loggerInit()
+	{
+		logger = Logger.getLogger("copy_app_logger");
+		TextAreaLogHandler handler = new TextAreaLogHandler(statusArea);
+		logger.addHandler(handler);
 	}
 
 	private void buttonsInit()
@@ -364,7 +390,15 @@ public class MainPaneController implements Initializable
 				copyTask.cancel();
 			}
 		});
+		closeButton.setOnAction(e ->
+		{
+			if (primaryStage != null)
+			{
+				primaryStage.close();
+			}
+		});
 		cancelButton.setDisable(true);
+		closeButton.setDisable(true);
 		yesButton.setOnAction(e -> copyRoutine(true));
 	}
 
@@ -387,9 +421,17 @@ public class MainPaneController implements Initializable
 
 				Platform.runLater(() ->
 				{
-					yesButton.setDisable(true);
-					noButton.setDisable(true);
-					cancelButton.setDisable(false);
+					if (overwriting)
+					{
+						yesButton.setDisable(true);
+						noButton.setDisable(true);
+						closeButton.setDisable(true);
+						cancelButton.setDisable(false);
+					} else
+					{
+						bottomCancelButton.setDisable(false);
+						rightLabel.setText("");
+					}
 				});
 
 				if (fromFile.isDirectory())
@@ -411,8 +453,6 @@ public class MainPaneController implements Initializable
 
 				targetDir = newFile.toPath();
 
-				// TODO - nadpisywanie pustego folderu
-
 				Files.walkFileTree(sourceDir, new SimpleFileVisitor<Path>()
 				{
 					/*
@@ -427,15 +467,18 @@ public class MainPaneController implements Initializable
 							System.out.println("Cancelled");
 							return FileVisitResult.TERMINATE;
 						}
-						
+
 						Path target = targetDir.resolve(sourceDir.relativize(dir));
 
 						try
 						{
 							Files.copy(dir, target);
-							statusArea.appendText("Directory " + dir + " copied to " + target + "\n");
+							if (overwriting)
+								logger.info("Folder " + dir + " " + properties.getProperty("copied-to", "skopiowano do")
+										+ " " + target + "\n");
 							copiedDirsCount++;
 							updateProgress(++currentCounter, dirsCount + filesCount);
+
 						} catch (FileAlreadyExistsException e)
 						{
 							if (!Files.isDirectory(target))
@@ -458,9 +501,12 @@ public class MainPaneController implements Initializable
 							return FileVisitResult.TERMINATE;
 						}
 
-						Files.copy(file, targetDir.resolve(sourceDir.relativize(file)),
-								StandardCopyOption.REPLACE_EXISTING);
-						statusArea.appendText("File " + file + " copied to " + targetDir + "\n");
+						Path target = targetDir.resolve(sourceDir.relativize(file));
+						Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
+						// TODO - opisy, statusy z properties
+						if (overwriting)
+							logger.info(properties.getProperty("file", "Plik") + " " + file + " "
+									+ properties.getProperty("copied-to", "skopiowano do") + " " + targetDir + "\n");
 						copiedFilesCount++;
 						updateProgress(++currentCounter, dirsCount + filesCount);
 						return FileVisitResult.CONTINUE;
@@ -468,32 +514,64 @@ public class MainPaneController implements Initializable
 				});
 				return null;
 			}
-		};
 
-		progressBar.progressProperty().bind(copyTask.progressProperty());
+		};
+		if (overwriting)
+			progressBar.progressProperty().bind(copyTask.progressProperty());
+		else
+			bottomProgressBar.progressProperty().bind(copyTask.progressProperty());
 		new Thread(copyTask).start(); // Run the copy task
 
 		copyTask.setOnFailed(e ->
 		{
 			Throwable t = copyTask.getException();
-			String message = (t != null) ? t.toString() : "Unknown Exception!\n";
-			statusArea.appendText("There was an error during the copy process:\n");
-			statusArea.appendText(message);
+			String message = (t != null) ? t.toString() : properties.getProperty("error-label") + "\n";
+			String textMessage = properties.getProperty("error-window") + ":\n";
+			if (overwriting)
+			{
+				logger.info(textMessage);
+				logger.info(message);
+			} else
+			{
+				System.out.println(textMessage + message);
+				rightLabel.setText(properties.getProperty("error-label", "B³¹d!"));
+			}
 			doTaskEventCloseRoutine(copyTask, overwriting);
 			t.printStackTrace();
 		});
 
 		copyTask.setOnCancelled(e ->
 		{
-			statusArea.appendText("Copy is cancelled by user.\n");
+			if (overwriting)
+			{
+				logger.info(properties.getProperty("cancelled-window", "Kopiowanie anulowane przez u¿ytkownika!"));
+				mainLabel
+						.setText(properties.getProperty("cancelled-window", "Kopiowanie anulowane przez u¿ytkownika!"));
+			} else
+			{
+				rightLabel.setText(properties.getProperty("cancelled-label", "Anulowano!"));
+			}
 			doTaskEventCloseRoutine(copyTask, overwriting);
 		});
 
 		copyTask.setOnSucceeded(e ->
 		{
-			statusArea.appendText(
-					"Copy completed. " + "Directories copied [" + ((copiedDirsCount < 1) ? 0 : copiedDirsCount) + "], "
-							+ "Files copied [" + copiedFilesCount + "]\n");
+			if (overwriting)
+				logger.info(properties.getProperty("copy-completed", "Kopiowanie ukoñczone") + ". "
+						+ properties.getProperty("directories-copied", "Skopiowane foldery") + " ["
+						+ ((copiedDirsCount < 1) ? 0 : copiedDirsCount) + "], "
+						+ properties.getProperty("files-copied", "Skopiowane pliki") + " [" + copiedFilesCount + "]\n");
+			// setting progress bar to 100% after succeeded
+			if (overwriting)
+			{
+				progressBar.progressProperty().bind(new SimpleDoubleProperty(1));
+				mainLabel.setText(properties.getProperty("succeeded-window", "Kopiowanie zakoñczone pomyœlnie"));
+			} else
+			{
+				bottomProgressBar.progressProperty().bind(new SimpleDoubleProperty(1));
+				rightLabel.setText(properties.getProperty("succeeded-label", "Sukces"));
+			}
+
 			// TODO - zmieniæ etykietê z pytnia na stan - sukces, b³¹d etc.
 			doTaskEventCloseRoutine(copyTask, overwriting);
 		});
@@ -501,9 +579,12 @@ public class MainPaneController implements Initializable
 
 	private void doTaskEventCloseRoutine(Task<Void> copyTask2, boolean overwriting)
 	{
-		// closing copying window
-		if (!overwriting)
-			primaryStage.close();
+		bottomCancelButton.setDisable(true);
+		if (overwriting)
+		{
+			closeButton.setDisable(false);
+			cancelButton.setDisable(true);
+		}
 		loadFiles(1, rightPath); // 1 for right
 	}
 
@@ -514,6 +595,7 @@ public class MainPaneController implements Initializable
 		yesButton.setText(properties.getProperty("yes-window", "Tak"));
 		noButton.setText(properties.getProperty("no-window", "Nie"));
 		cancelButton.setText(properties.getProperty("cancel-window", "Anuluj"));
+		closeButton.setText(properties.getProperty("close-window", "Zamknij"));
 	}
 
 	private void tablesListener()
@@ -591,6 +673,7 @@ public class MainPaneController implements Initializable
 				initTablesLabels();
 				initMenuLabels();
 				initToolBarLabels();
+				initBottom();
 
 				loadFiles(0, leftPath); // 0 for left
 				loadFiles(1, rightPath); // 1 for right
@@ -607,6 +690,7 @@ public class MainPaneController implements Initializable
 				initTablesLabels();
 				initMenuLabels();
 				initToolBarLabels();
+				initBottom();
 
 				loadFiles(0, leftPath); // 0 for left
 				loadFiles(1, rightPath); // 1 for right

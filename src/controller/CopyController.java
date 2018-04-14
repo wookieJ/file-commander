@@ -30,6 +30,9 @@ public class CopyController implements Initializable
 	@FXML
 	private Button noButton;
 
+	@FXML
+	private Button closeButton;
+
 	public TextArea getStatusArea()
 	{
 		return statusArea;
@@ -92,6 +95,16 @@ public class CopyController implements Initializable
 
 	public CopyController()
 	{
+	}
+
+	public Button getCloseButton()
+	{
+		return closeButton;
+	}
+
+	public void setCloseButton(Button closeButton)
+	{
+		this.closeButton = closeButton;
 	}
 
 	@Override

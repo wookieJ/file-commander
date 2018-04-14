@@ -6,7 +6,7 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane prefHeight="377.0" prefWidth="667.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.CopyController">
+<BorderPane prefHeight="377.0" prefWidth="732.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.CopyController">
    <bottom>
       <VBox alignment="CENTER" BorderPane.alignment="CENTER">
          <children>
@@ -20,6 +20,7 @@
                   <Button fx:id="yesButton" mnemonicParsing="false" text="Yes" />
                   <Button fx:id="noButton" mnemonicParsing="false" text="No" />
                   <Button fx:id="cancelButton" mnemonicParsing="false" text="Cancel" />
+                  <Button fx:id="closeButton" mnemonicParsing="false" text="Close" />
                </children>
                <padding>
                   <Insets bottom="5.0" top="5.0" />

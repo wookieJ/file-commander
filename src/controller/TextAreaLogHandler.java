@@ -21,6 +21,6 @@ public class TextAreaLogHandler extends StreamHandler {
         
         super.publish(record);
         flush();
-        Platform.runLater(() -> textArea.appendText(getFormatter().format(record)));
+        Platform.runLater(() -> textArea.appendText(record.getMessage()));
     }
 }
