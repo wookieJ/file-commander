@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.Socket;
 import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileVisitResult;
@@ -17,6 +16,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.logging.Logger;
@@ -32,6 +32,8 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
@@ -41,6 +43,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -164,6 +167,8 @@ public class MainPaneController implements Initializable
 	private Button noButton;
 	private Button closeButton;
 
+	private Boolean leftOrRight;
+
 	public MainPaneController()
 	{
 		properties = new Properties();
@@ -171,6 +176,8 @@ public class MainPaneController implements Initializable
 
 		leftPath = INITIAL_PATH;
 		rightPath = INITIAL_PATH;
+
+		leftOrRight = null;
 	}
 
 	@Override
@@ -181,24 +188,180 @@ public class MainPaneController implements Initializable
 		initToolBarLabels();
 		initBottom();
 
-		loadFiles(0, leftPath); // 0 for left
-		loadFiles(1, rightPath); // 1 for right
+		loadFiles();
 
 		langugeMenuItemListener();
 		tablesListener();
 		textPathSearchInit();
-
 		copyFilesInit();
+		toolbarInit();
 
 		// TODO - Sortowanie - nie braæ pod uwagê powracj¹cego elelementu
 		// TODO - Klawiatura - szukanie zatwierdzanie enterem
 		// TODO - Przegl¹danie - zatwierdzanie elementów enterem
-		// TODO - na prawo i lewo (kopiowanie, przenoszenie)
-		// TODO - usuwaanie plików
+		// TODO - usuwanie plików
 		// TODO - tworzenie plików
 		// TODO - tworzenie folderów
 		// TODO - About (o aaplikacji)
 		// TODO - zamykanie na przycisk File->close
+	}
+
+	private void toolbarInit()
+	{
+		deleteButton.setOnAction(new EventHandler<ActionEvent>()
+		{
+			@Override
+			public void handle(ActionEvent event)
+			{
+				SystemFile selectedLeftFile = leftTableView.getSelectionModel().getSelectedItem();
+				SystemFile selectedRightFile = rightTableView.getSelectionModel().getSelectedItem();
+
+				if (leftOrRight != null && leftOrRight == false && selectedLeftFile != null)
+				{
+					// TODO - create() - dodaæ implementacjê usuwania
+					// TODO - dodaæ status na rightLabel ?
+					// TODO - usuwanie folderu z zawartoœci¹
+					selectedLeftFile.getFile().delete();
+					loadFiles();
+				} else if (leftOrRight != null && leftOrRight == true && selectedRightFile != null)
+				{
+					selectedRightFile.getFile().delete();
+					loadFiles();
+				}
+			}
+		});
+
+		newFolderButton.setOnAction(new EventHandler<ActionEvent>()
+		{
+			@Override
+			public void handle(ActionEvent event)
+			{
+				TextInputDialog input = new TextInputDialog();
+				input.setTitle(properties.getProperty("new-folder-title", "Nowy folder"));
+				input.setHeaderText(properties.getProperty("new-folder-title", "Nowy folder"));
+				input.setGraphic(new ImageView("/resource/newFolderWindow.png"));
+
+				// TODO -ikona okna
+
+				input.setContentText(properties.getProperty("new-folder-content", "Podaj nazwê nowego folderu") + ":");
+
+				Optional<String> newFolderName = input.showAndWait();
+				if (newFolderName.isPresent())
+				{
+					File newFolder = null;
+					if (leftOrRight != null && leftOrRight == false)
+					{
+						newFolder = new File(leftPath + "/" + newFolderName.get());
+					} else if (leftOrRight != null && leftOrRight == true)
+					{
+						newFolder = new File(rightPath + newFolderName.get());
+					}
+					if (newFolder != null && !newFolder.exists())
+					{
+						newFolder.mkdir();
+
+						loadFiles();
+					} else
+					{
+						// TODO - dodaæ status na rightLabel
+						Alert alert = new Alert(AlertType.ERROR);
+						alert.setTitle(properties.getProperty("folder-exists-title", "Folder istnieje"));
+						alert.setHeaderText(properties.getProperty("folder-exists-title", "Folder istnieje"));
+						alert.setContentText(properties.getProperty("folder-exists-content", "Folder istnieje"));
+						// TODO -ikona okna
+
+						alert.showAndWait();
+					}
+				}
+			}
+		});
+
+		newFileButton.setOnAction(new EventHandler<ActionEvent>()
+		{
+			@Override
+			public void handle(ActionEvent event)
+			{
+				TextInputDialog input = new TextInputDialog();
+				input.setTitle(properties.getProperty("new-file-title", "Nowy plik"));
+				input.setContentText(properties.getProperty("new-file-content", "Podaj nazwê nowego pliku"));
+				input.setHeaderText(properties.getProperty("new-file-title", "Nowy plik"));
+				input.setGraphic(new ImageView("/resource/newFileWindow.png"));
+
+				Optional<String> newFileName = input.showAndWait();
+				if (newFileName.isPresent())
+				{
+					File newFolder = null;
+					if (leftOrRight != null && leftOrRight == false)
+					{
+						newFolder = new File(leftPath + "/" + newFileName.get());
+					} else if (leftOrRight != null && leftOrRight == true)
+					{
+						newFolder = new File(rightPath + newFileName.get());
+					}
+					if (newFolder != null && !newFolder.exists())
+					{
+						try
+						{
+							newFolder.createNewFile();
+							loadFiles();
+						} catch (IOException e)
+						{
+							e.printStackTrace();
+						}
+					} else
+					{
+						Alert alert = new Alert(AlertType.ERROR);
+						alert.setTitle(properties.getProperty("file-exists-title", "Plik istnieje"));
+						alert.setHeaderText(properties.getProperty("file-exists-title", "Plik istnieje"));
+						alert.setContentText(properties.getProperty("file-exists-content", "Podaj inn¹ nazwê pliku"));
+						// TODO -ikona okna
+						// TODO - dodaæ status na rightLabel
+
+						alert.showAndWait();
+					}
+				}
+			}
+		});
+
+		editButton.setOnAction(new EventHandler<ActionEvent>()
+		{
+			@Override
+			public void handle(ActionEvent event)
+			{
+				SystemFile selectedLeftFile = leftTableView.getSelectionModel().getSelectedItem();
+				SystemFile selectedRightFile = rightTableView.getSelectionModel().getSelectedItem();
+				SystemFile fileToEdit = null;
+
+				if (leftOrRight != null && leftOrRight == false && selectedLeftFile != null)
+				{
+					fileToEdit = selectedLeftFile;
+				} else if (leftOrRight != null && leftOrRight == true && selectedRightFile != null)
+				{
+					fileToEdit = selectedRightFile;
+				}
+
+				if (fileToEdit != null)
+				{
+
+					TextInputDialog input = new TextInputDialog();
+					input.setTitle(properties.getProperty("rename-title", "Zmieñ nazwê"));
+					input.setHeaderText(
+							properties.getProperty("rename-title", "Zmieñ nazwê") + " - " + fileToEdit.getFileName());
+
+					// TODO -ikona okna
+
+					input.setContentText(properties.getProperty("raname-content", "Podaj now¹ nazwê") + ":");
+
+					Optional<String> newFileName = input.showAndWait();
+					if (newFileName.isPresent())
+					{
+						File newFile = fileToEdit.getFile();
+						newFile.renameTo(new File(fileToEdit.getFile().getAbsolutePath() + "/../" + newFileName.get()));
+						loadFiles();
+					}
+				}
+			}
+		});
 	}
 
 	private void initBottom()
@@ -223,7 +386,7 @@ public class MainPaneController implements Initializable
 					if (searchedSystemFile != null && searchedSystemFile.exists())
 					{
 						leftPath = searchedSystemFile.toPath().toString();
-						loadFiles(0, leftPath); // 0 for left
+						loadFiles();
 					}
 				}
 			}
@@ -241,7 +404,7 @@ public class MainPaneController implements Initializable
 					if (searchedSystemFile != null && searchedSystemFile.exists())
 					{
 						rightPath = searchedSystemFile.toPath().toString();
-						loadFiles(1, rightPath); // 1 for right
+						loadFiles();
 					}
 				}
 			}
@@ -693,8 +856,7 @@ public class MainPaneController implements Initializable
 		}
 		if (moveOrCopy == false)
 			fromFile.delete();
-		loadFiles(1, rightPath); // 1 for right
-		loadFiles(0, leftPath);
+		loadFiles();
 	}
 
 	public void copyControllerTextInit(boolean moveOrCopy)
@@ -729,7 +891,7 @@ public class MainPaneController implements Initializable
 						if (selectedFile.isDirectory())
 						{
 							leftPath = selectedFile.getFile().getAbsolutePath();
-							loadFiles(0, leftPath); // 0 for left
+							loadFiles();
 						}
 						// otherwise open it in default desktop program
 						else
@@ -744,6 +906,8 @@ public class MainPaneController implements Initializable
 						}
 					}
 				}
+
+				leftOrRight = false;
 			}
 		});
 
@@ -760,7 +924,7 @@ public class MainPaneController implements Initializable
 					if (selectedFile.isDirectory())
 					{
 						rightPath = selectedFile.getFile().getAbsolutePath();
-						loadFiles(1, rightPath); // 1 for right
+						loadFiles();
 					}
 					// otherwise open it in default desktop program
 					else
@@ -774,6 +938,8 @@ public class MainPaneController implements Initializable
 						}
 					}
 				}
+
+				leftOrRight = true;
 			}
 		});
 	}
@@ -792,8 +958,7 @@ public class MainPaneController implements Initializable
 				initToolBarLabels();
 				initBottom();
 
-				loadFiles(0, leftPath); // 0 for left
-				loadFiles(1, rightPath); // 1 for right
+				loadFiles();
 			}
 		});
 
@@ -809,67 +974,77 @@ public class MainPaneController implements Initializable
 				initToolBarLabels();
 				initBottom();
 
-				loadFiles(0, leftPath); // 0 for left
-				loadFiles(1, rightPath); // 1 for right
+				loadFiles();
 			}
 		});
 	}
 
-	public void loadFiles(int leftOrRight, String root)
+	public void loadFiles()
 	{
-		SystemFile rootFile;
-		List<SystemFile> systemFileList = new ArrayList<>();
+		SystemFile leftRootFile, rightRootFile;
+		List<SystemFile> leftSystemFileList = new ArrayList<>();
+		List<SystemFile> rightSystemFileList = new ArrayList<>();
 
-		// creating new SystemFile
-		rootFile = new SystemFile(new File(root), properties);
-		if (rootFile.exists() && rootFile.isDirectory())
+		// creating new SystemFiles
+		leftRootFile = new SystemFile(new File(leftPath), properties);
+		rightRootFile = new SystemFile(new File(rightPath), properties);
+		if (leftRootFile.exists() && rightRootFile.exists() && leftRootFile.isDirectory()
+				&& rightRootFile.isDirectory())
 		{
-			systemFileList = rootFile.listSystemFiles(properties);
+			leftSystemFileList = leftRootFile.listSystemFiles(properties);
+			rightSystemFileList = rightRootFile.listSystemFiles(properties);
 		}
-
-		// deciding to which table write
-		TableView<SystemFile> table;
-		if (leftOrRight == 0)
-			table = leftTableView;
-		else
-			table = rightTableView;
 
 		// adding files to observable list
-		ObservableList<SystemFile> observableList = FXCollections.observableArrayList(systemFileList);
+		ObservableList<SystemFile> leftObservableList = FXCollections.observableArrayList(leftSystemFileList);
+		ObservableList<SystemFile> rightObservableList = FXCollections.observableArrayList(rightSystemFileList);
 
 		// setting root file
-		String rootParentName = rootFile.getFile().getParent();
-		SystemFile parentFile;
-		if (rootParentName != null)
+		String leftRootParentName = leftRootFile.getFile().getParent();
+		String rightRootParentName = rightRootFile.getFile().getParent();
+		SystemFile leftParentFile, rightParentFile;
+		if (leftRootParentName != null && rightRootParentName != null)
 		{
-			parentFile = new SystemFile(new File(rootParentName), properties);
-			parentFile.setFileName(rootParentName);
+			leftParentFile = new SystemFile(new File(leftRootParentName), properties);
+			leftParentFile.setFileName(leftRootParentName);
+
+			rightParentFile = new SystemFile(new File(rightRootParentName), properties);
+			rightParentFile.setFileName(rightRootParentName);
 		} else
 		{
-			parentFile = rootFile;
-			parentFile.setFileName("");
+			leftParentFile = leftRootFile;
+			leftParentFile.setFileName("");
+
+			rightParentFile = rightRootFile;
+			rightParentFile.setFileName("");
 		}
-		parentFile.setLastModified("");
-		parentFile.setFileType("");
-		parentFile.setTypeOfFile(TypeOfFile.ROOT);
-		parentFile.setSize("");
-		ImageView imageView = new ImageView(new Image("resource/folderBack.png"));
-		imageView.setFitHeight(20);
-		imageView.setFitWidth(20);
-		parentFile.setImage(imageView);
+		leftParentFile.setLastModified("");
+		leftParentFile.setFileType("");
+		leftParentFile.setTypeOfFile(TypeOfFile.ROOT);
+		leftParentFile.setSize("");
+		ImageView leftImageView = new ImageView(new Image("resource/folderBack.png"));
+		leftImageView.setFitHeight(20);
+		leftImageView.setFitWidth(20);
+		leftParentFile.setImage(leftImageView);
+
+		rightParentFile.setLastModified("");
+		rightParentFile.setFileType("");
+		rightParentFile.setTypeOfFile(TypeOfFile.ROOT);
+		leftParentFile.setSize("");
+		ImageView rightImageView = new ImageView(new Image("resource/folderBack.png"));
+		rightImageView.setFitHeight(20);
+		rightImageView.setFitWidth(20);
+		rightParentFile.setImage(rightImageView);
 
 		// adding root file and other files to tables
-		observableList.add(0, parentFile);
-		table.setItems(observableList);
+		leftObservableList.add(0, leftParentFile);
+		rightObservableList.add(0, rightParentFile);
+		leftTableView.setItems(leftObservableList);
+		rightTableView.setItems(rightObservableList);
 
 		// adding path to text box
-		TextField textField;
-		if (leftOrRight == 0)
-			textField = leftPathTextField;
-		else
-			textField = rightPathTextField;
-
-		textField.setText(root);
+		leftPathTextField.setText(leftPath);
+		rightPathTextField.setText(rightPath);
 	}
 
 	private void initMenuLabels()
