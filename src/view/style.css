@@ -43,7 +43,16 @@
     -fx-background-image: url("../resource/search.png");
 }
  
-.button{
+#search-right-button,
+#search-left-button,
+#copy-right-button,
+#copy-left-button,
+#move-right-button,
+#move-left-button,
+#new-file-button,
+#new-folder-button,
+#edit-button,
+#remove-button{
     -fx-background-repeat: no-repeat;
     -fx-background-position: center;
     -fx-background-size: 70.0% 70.0%; 
@@ -52,6 +61,15 @@
 }
  
 /* After hovering */
-.button:hover{
+#search-right-button:hover,
+#search-left-button:hover,
+#copy-right-button:hover,
+#copy-left-button:hover,
+#move-right-button:hover,
+#move-left-button:hover,
+#new-file-button:hover,
+#new-folder-button:hover,
+#edit-button:hover,
+#remove-button:hover{
     -fx-opacity: 100.0%;
 }
