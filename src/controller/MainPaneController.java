@@ -205,8 +205,6 @@ public class MainPaneController implements Initializable
 		toolbarInit();
 
 		// TODO - Sortowanie - nie braæ pod uwagê powracj¹cego elelementu
-		// TODO - Klawiatura - szukanie zatwierdzanie enterem
-		// TODO - Przegl¹danie - zatwierdzanie elementów enterem
 		// TODO - About (o aplikacji)
 		// TODO - zamykanie na przycisk File->close
 		// TODO - uwzglêdnianie w wygl¹dzie aplikacji (kolory) preferencji
@@ -444,6 +442,29 @@ public class MainPaneController implements Initializable
 			}
 		});
 
+		leftPathTextField.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>()
+		{
+			@Override
+			public void handle(KeyEvent event)
+			{
+				if (event.getCode() == KeyCode.ENTER)
+				{
+					File searchedFile = new File(leftPathTextField.getText());
+					if (searchedFile != null && searchedFile.exists())
+					{
+						SystemFile searchedSystemFile = new SystemFile(searchedFile, properties);
+						if (searchedSystemFile != null && searchedSystemFile.exists())
+						{
+							leftPath = searchedSystemFile.toPath().toString();
+							loadFiles();
+						}
+					}
+
+					leftPathTextField.setText(leftPath);
+				}
+			}
+		});
+
 		rightPathButton.setOnAction(new EventHandler<ActionEvent>()
 		{
 			@Override
@@ -462,6 +483,31 @@ public class MainPaneController implements Initializable
 
 				rightPathTextField.setText(rightPath);
 			}
+		});
+
+		rightPathTextField.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>()
+		{
+			@Override
+			public void handle(KeyEvent event)
+			{
+				System.out.println(event.getCode());
+				if (event.getCode() == KeyCode.ENTER)
+				{
+					File searchedFile = new File(rightPathTextField.getText());
+					if (searchedFile != null && searchedFile.exists())
+					{
+						SystemFile searchedSystemFile = new SystemFile(searchedFile, properties);
+						if (searchedSystemFile != null && searchedSystemFile.exists())
+						{
+							rightPath = searchedSystemFile.toPath().toString();
+							loadFiles();
+						}
+					}
+
+					rightPathTextField.setText(rightPath);
+				}
+			}
+
 		});
 	}
 
