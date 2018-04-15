@@ -193,6 +193,12 @@ public class MainPaneController implements Initializable
 		// TODO - Sortowanie - nie braæ pod uwagê powracj¹cego elelementu
 		// TODO - Klawiatura - szukanie zatwierdzanie enterem
 		// TODO - Przegl¹danie - zatwierdzanie elementów enterem
+		// TODO - na prawo i lewo (kopiowanie, przenoszenie)
+		// TODO - usuwaanie plików
+		// TODO - tworzenie plików
+		// TODO - tworzenie folderów
+		// TODO - About (o aaplikacji)
+		// TODO - zamykanie na przycisk File->close
 	}
 
 	private void initBottom()
@@ -255,42 +261,77 @@ public class MainPaneController implements Initializable
 				{
 					try
 					{
-						create(selectedFile.toPath(), new File(rightPath).toPath());
+						create(selectedFile.toPath(), new File(rightPath).toPath(), true);
 					} catch (IOException e)
 					{
 						e.printStackTrace();
 					}
-
-					/*
-					 * This method can be used with the walkFileTree method to
-					 * copy a directory and all entries in the directory, or an
-					 * entire file-tree where required.
-					 */
-
-					/*
-					 * UnsupportedOperationException - if the array contains a
-					 * copy option that is not supported
-					 * FileAlreadyExistsException - if the target file exists
-					 * but cannot be replaced because the REPLACE_EXISTING
-					 * option is not specified (optional specific exception)
-					 * DirectoryNotEmptyException - the REPLACE_EXISTING option
-					 * is specified but the file cannot be replaced because it
-					 * is a non-empty directory (optional specific exception)
-					 * IOException - if an I/O error occursSecurityException -
-					 * In the case of the default provider, and a security
-					 * manager is installed, the checkRead method is invoked to
-					 * check read access to the source file, the checkWrite is
-					 * invoked to check write access to the target file. If a
-					 * symbolic link is copied the security manager is invoked
-					 * to check LinkPermission("symbolic").
-					 */
 				}
 			}
+		});
 
+		copyToLeftButton.setOnAction(new EventHandler<ActionEvent>()
+		{
+			@Override
+			public void handle(ActionEvent event)
+			{
+				// Getting selected file
+				SystemFile selectedFile = rightTableView.getSelectionModel().getSelectedItem();
+				if (selectedFile != null && selectedFile.getTypeOfFile() != TypeOfFile.ROOT)
+				{
+					try
+					{
+						create(selectedFile.toPath(), new File(leftPath).toPath(), true);
+					} catch (IOException e)
+					{
+						e.printStackTrace();
+					}
+				}
+			}
+		});
+
+		moveToRightButton.setOnAction(new EventHandler<ActionEvent>()
+		{
+			@Override
+			public void handle(ActionEvent event)
+			{
+				// Getting selected file
+				SystemFile selectedFile = leftTableView.getSelectionModel().getSelectedItem();
+				if (selectedFile != null && selectedFile.getTypeOfFile() != TypeOfFile.ROOT)
+				{
+					try
+					{
+						create(selectedFile.toPath(), new File(rightPath).toPath(), false);
+					} catch (IOException e)
+					{
+						e.printStackTrace();
+					}
+				}
+			}
+		});
+
+		moveToLeftButton.setOnAction(new EventHandler<ActionEvent>()
+		{
+			@Override
+			public void handle(ActionEvent event)
+			{
+				// Getting selected file
+				SystemFile selectedFile = rightTableView.getSelectionModel().getSelectedItem();
+				if (selectedFile != null && selectedFile.getTypeOfFile() != TypeOfFile.ROOT)
+				{
+					try
+					{
+						create(selectedFile.toPath(), new File(leftPath).toPath(), false);
+					} catch (IOException e)
+					{
+						e.printStackTrace();
+					}
+				}
+			}
 		});
 	}
 
-	public void create(Path sourceDir, Path targetDir) throws IOException
+	public void create(Path sourceDir, Path targetDir, boolean moveOrCopy) throws IOException
 	{
 		String newTargetString = targetDir.toString() + "\\" + sourceDir.getFileName();
 		String actualFilePath = sourceDir.toString();
@@ -327,7 +368,10 @@ public class MainPaneController implements Initializable
 			Scene scene = new Scene(rootLayout);
 			primaryStage.setScene(scene);
 			primaryStage.getIcons().add(new Image("/resource/logo.png"));
-			primaryStage.setTitle("JCommander - " + properties.getProperty("copy-label", "Kopiowanie"));
+			if (moveOrCopy)
+				primaryStage.setTitle("JCommander - " + properties.getProperty("copy-label", "Kopiowanie"));
+			else
+				primaryStage.setTitle("JCommander - " + properties.getProperty("move-label", "Przenoszenie"));
 			primaryStage.show();
 
 			CopyController copyController = (CopyController) loader.getController();
@@ -344,8 +388,8 @@ public class MainPaneController implements Initializable
 				this.closeButton = copyController.getCloseButton();
 				this.progressBar.setPrefWidth(primaryStage.getWidth() - 35);
 
-				buttonsInit();
-				copyControllerTextInit();
+				buttonsInit(moveOrCopy);
+				copyControllerTextInit(moveOrCopy);
 				loggerInit();
 
 			} else if (copyController == null)
@@ -366,7 +410,7 @@ public class MainPaneController implements Initializable
 					copyTask.cancel();
 				}
 			});
-			copyRoutine(false);
+			copyRoutine(false, moveOrCopy);
 		}
 	}
 
@@ -377,7 +421,7 @@ public class MainPaneController implements Initializable
 		logger.addHandler(handler);
 	}
 
-	private void buttonsInit()
+	private void buttonsInit(boolean moveOrCopy)
 	{
 		cancelButton.setOnAction(e ->
 		{
@@ -395,10 +439,10 @@ public class MainPaneController implements Initializable
 		});
 		cancelButton.setDisable(true);
 		closeButton.setDisable(true);
-		yesButton.setOnAction(e -> copyRoutine(true));
+		yesButton.setOnAction(e -> copyRoutine(true, moveOrCopy));
 	}
 
-	private void copyRoutine(boolean overwriting)
+	private void copyRoutine(boolean overwriting, boolean moveOrCopy)
 	{
 		File fromFile = new File(sourceDir.toString());
 		File newFile = new File(targetDir.toString() + "/" + sourceDir.getFileName());
@@ -438,7 +482,7 @@ public class MainPaneController implements Initializable
 
 				Thread.sleep(100); // pause for n milliseconds
 
-				if (!newFile.exists())
+				if (!newFile.exists())// && moveOrCopy)
 				{
 					if (fromFile.isDirectory())
 					{
@@ -468,10 +512,25 @@ public class MainPaneController implements Initializable
 
 						try
 						{
-							Files.copy(dir, target);
-							if (overwriting)
-								logger.info("Folder " + dir + " " + properties.getProperty("copied-to", "skopiowano do")
-										+ " " + target + "\n");
+							if (moveOrCopy)
+							{
+								Files.copy(dir, target);
+								if (overwriting)
+								{
+									logger.info(
+											"Folder " + dir + " " + properties.getProperty("copied-to", "skopiowano do")
+													+ " " + target + "\n");
+								}
+							} else
+							{
+								Files.move(dir, target);
+								if (overwriting)
+								{
+									logger.info("Folder " + dir + " "
+											+ properties.getProperty("moved-to", "przeniesiono do") + " " + target
+											+ "\n");
+								}
+							}
 							copiedDirsCount++;
 							updateProgress(++currentCounter, dirsCount + filesCount);
 
@@ -498,10 +557,26 @@ public class MainPaneController implements Initializable
 						}
 
 						Path target = targetDir.resolve(sourceDir.relativize(file));
-						Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
-						if (overwriting)
-							logger.info(properties.getProperty("file", "Plik") + " " + file + " "
-									+ properties.getProperty("copied-to", "skopiowano do") + " " + targetDir + "\n");
+						if (moveOrCopy)
+						{
+							Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
+							if (overwriting)
+							{
+								logger.info(properties.getProperty("file", "Plik") + " " + file + " "
+										+ properties.getProperty("copied-to", "skopiowano do") + " " + targetDir
+										+ "\n");
+							}
+						} else
+						{
+							Files.move(file, target, StandardCopyOption.REPLACE_EXISTING);// ,
+																							// StandardCopyOption.REPLACE_EXISTING);
+							if (overwriting)
+							{
+								logger.info(properties.getProperty("file", "Plik") + " " + file + " "
+										+ properties.getProperty("moved-to", "przeniesiono do") + " " + targetDir
+										+ "\n");
+							}
+						}
 						copiedFilesCount++;
 						updateProgress(++currentCounter, dirsCount + filesCount);
 						return FileVisitResult.CONTINUE;
@@ -521,7 +596,13 @@ public class MainPaneController implements Initializable
 		{
 			Throwable t = copyTask.getException();
 			String message = (t != null) ? t.toString() : properties.getProperty("error-label", "B³¹d!") + "\n";
-			String textMessage = properties.getProperty("error-window", "Wyst¹pi³ b³¹d podczas kopiowania.") + ":\n";
+			String operation;
+			if (moveOrCopy)
+				operation = properties.getProperty("copying", "kopiowania");
+			else
+				operation = properties.getProperty("moving", "przenoszenia");
+			String textMessage = properties.getProperty("error-window", "Wyst¹pi³ b³¹d podczas " + operation + ".")
+					+ ":\n";
 			if (overwriting)
 			{
 				logger.info(textMessage);
@@ -531,47 +612,78 @@ public class MainPaneController implements Initializable
 				System.out.println(textMessage + message);
 				rightLabel.setText(properties.getProperty("error-label", "B³¹d!"));
 			}
-			doTaskEventCloseRoutine(copyTask, overwriting);
+			doTaskEventCloseRoutine(overwriting, moveOrCopy, fromFile);
 			t.printStackTrace();
 		});
 
 		copyTask.setOnCancelled(e ->
 		{
-			if (overwriting)
+			if (moveOrCopy)
 			{
-				logger.info(properties.getProperty("cancelled-window", "Kopiowanie anulowane przez u¿ytkownika!"));
-				mainLabel
-						.setText(properties.getProperty("cancelled-window", "Kopiowanie anulowane przez u¿ytkownika!"));
+				if (overwriting)
+				{
+					logger.info(properties.getProperty("cancelled-window", "Kopiowanie anulowane przez u¿ytkownika!"));
+					mainLabel.setText(
+							properties.getProperty("cancelled-window", "Kopiowanie anulowane przez u¿ytkownika!"));
+				} else
+				{
+					rightLabel.setText(properties.getProperty("cancelled-label", "Anulowano!"));
+				}
 			} else
 			{
-				rightLabel.setText(properties.getProperty("cancelled-label", "Anulowano!"));
+				if (overwriting)
+				{
+					logger.info(properties.getProperty("cancelled-moving-window",
+							"Przenoszenie anulowane przez u¿ytkownika!"));
+					mainLabel.setText(properties.getProperty("cancelled-moving-window",
+							"Przenoszenie anulowane przez u¿ytkownika!"));
+				} else
+				{
+					rightLabel.setText(properties.getProperty("cancelled-label", "Anulowano!"));
+				}
 			}
-			doTaskEventCloseRoutine(copyTask, overwriting);
+			doTaskEventCloseRoutine(overwriting, moveOrCopy, fromFile);
 		});
 
 		copyTask.setOnSucceeded(e ->
 		{
-			if (overwriting)
-				logger.info(properties.getProperty("copy-completed", "Kopiowanie ukoñczone") + ". "
-						+ properties.getProperty("directories-copied", "Skopiowane foldery") + " ["
-						+ ((copiedDirsCount < 1) ? 0 : copiedDirsCount) + "], "
-						+ properties.getProperty("files-copied", "Skopiowane pliki") + " [" + copiedFilesCount + "]\n");
+			if (moveOrCopy)
+			{
+				if (overwriting)
+					logger.info(properties.getProperty("copy-completed", "Kopiowanie ukoñczone") + ". "
+							+ properties.getProperty("directories-copied", "Skopiowane foldery") + " ["
+							+ ((copiedDirsCount < 1) ? 0 : copiedDirsCount) + "], "
+							+ properties.getProperty("files-copied", "Skopiowane pliki") + " [" + copiedFilesCount
+							+ "]\n");
+			} else
+			{
+				if (overwriting)
+					logger.info(properties.getProperty("move-completed", "Przenoszenie ukoñczone") + ". "
+							+ properties.getProperty("directories-moved", "Przeniesione foldery") + " ["
+							+ ((copiedDirsCount < 1) ? 0 : copiedDirsCount) + "], "
+							+ properties.getProperty("files-moved", "Przeniesione pliki") + " [" + copiedFilesCount
+							+ "]\n");
+			}
 			// setting progress bar to 100% after succeeded
 			if (overwriting)
 			{
 				progressBar.progressProperty().bind(new SimpleDoubleProperty(1));
-				mainLabel.setText(properties.getProperty("succeeded-window", "Kopiowanie zakoñczone pomyœlnie"));
+				if (moveOrCopy)
+					mainLabel.setText(properties.getProperty("succeeded-window", "Kopiowanie zakoñczone pomyœlnie"));
+				else
+					mainLabel.setText(
+							properties.getProperty("succeeded-moving-window", "Przenoszenie zakoñczone pomyœlnie"));
 			} else
 			{
 				bottomProgressBar.progressProperty().bind(new SimpleDoubleProperty(1));
 				rightLabel.setText(properties.getProperty("succeeded-label", "Sukces"));
 			}
 
-			doTaskEventCloseRoutine(copyTask, overwriting);
+			doTaskEventCloseRoutine(overwriting, moveOrCopy, fromFile);
 		});
 	}
 
-	private void doTaskEventCloseRoutine(Task<Void> copyTask2, boolean overwriting)
+	private void doTaskEventCloseRoutine(boolean overwriting, boolean moveOrCopy, File fromFile)
 	{
 		bottomCancelButton.setDisable(true);
 		if (overwriting)
@@ -579,13 +691,21 @@ public class MainPaneController implements Initializable
 			closeButton.setDisable(false);
 			cancelButton.setDisable(true);
 		}
+		if (moveOrCopy == false)
+			fromFile.delete();
 		loadFiles(1, rightPath); // 1 for right
+		loadFiles(0, leftPath);
 	}
 
-	public void copyControllerTextInit()
+	public void copyControllerTextInit(boolean moveOrCopy)
 	{
-		mainLabel.setText(properties.getProperty("copy-label", "Kopiowanie") + " - "
-				+ properties.getProperty("copy-exist-question", "Czy chcesz nadpisaæ pliki?"));
+		String operation;
+		if (moveOrCopy)
+			operation = properties.getProperty("copy-label", "Kopiowanie");
+		else
+			operation = properties.getProperty("move-label", "Przenoszenie");
+		mainLabel.setText(
+				operation + " - " + properties.getProperty("copy-exist-question", "Czy chcesz nadpisaæ pliki?"));
 		yesButton.setText(properties.getProperty("yes-window", "Tak"));
 		noButton.setText(properties.getProperty("no-window", "Nie"));
 		cancelButton.setText(properties.getProperty("cancel-window", "Anuluj"));
