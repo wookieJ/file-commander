@@ -107,7 +107,8 @@
                         <AnchorPane>
                            <children>
                               <Label fx:id="leftPathLabel" alignment="CENTER" text="Path:" textAlignment="CENTER" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0" />
-                              <TextField fx:id="leftPathTextField" maxWidth="1.7976931348623157E308" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="30.0" />
+                              <TextField fx:id="leftPathTextField" maxWidth="1.7976931348623157E308" AnchorPane.leftAnchor="111.0" AnchorPane.rightAnchor="30.0" />
+                              <ComboBox fx:id="leftPathComboBox" prefWidth="60.0" AnchorPane.leftAnchor="50.0" />
                               <Button id="search-left-button" fx:id="leftPathButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" AnchorPane.rightAnchor="5.0" />
                            </children>
                         </AnchorPane>
@@ -119,7 +120,8 @@
                         <AnchorPane>
                            <children>
                               <Label fx:id="rightPathLabel" alignment="CENTER" text="Path:" textAlignment="CENTER" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0" />
-                              <TextField fx:id="rightPathTextField" maxWidth="1.7976931348623157E308" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="30.0" />
+                              <TextField fx:id="rightPathTextField" maxWidth="1.7976931348623157E308" AnchorPane.leftAnchor="111.0" AnchorPane.rightAnchor="30.0" />
+                              <ComboBox fx:id="rightPathComboBox" prefWidth="60.0" AnchorPane.leftAnchor="50.0" />
                               <Button id="search-right-button" fx:id="rightPathButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" AnchorPane.rightAnchor="5.0" />
                            </children>
                         </AnchorPane>

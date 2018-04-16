@@ -25,8 +25,9 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.logging.Logger;
 
-import org.apache.commons.io.FileUtils;
+import javax.swing.filechooser.FileSystemView;
 
+import org.apache.commons.io.FileUtils;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
@@ -43,6 +44,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -65,7 +67,7 @@ import model.TypeOfFile;
 
 public class MainPaneController implements Initializable
 {
-	private static final String INITIAL_PATH = "C:/Users/£ukasz/Desktop/AL test folder";
+	private static final String INITIAL_PATH = "C:/";
 
 	private Properties properties;
 	private String leftPath;
@@ -152,6 +154,12 @@ public class MainPaneController implements Initializable
 	private MenuItem closeMenuItem;
 
 	@FXML
+	private ComboBox<File> leftPathComboBox;
+
+	@FXML
+	private ComboBox<File> rightPathComboBox;
+
+	@FXML
 	private Label moveLabel;
 
 	@FXML
@@ -207,14 +215,45 @@ public class MainPaneController implements Initializable
 		toolbarInit();
 		aboutMenuItem();
 		closeItem();
+		diskInit();
+
+		bottomProgressBar.setDisable(true);
 
 		// TODO - sortowanie po nazwie - liczby w nazwie
-		// TODO - zamykanie na przycisk File->close
 		// TODO - uwzglêdnianie w wygl¹dzie aplikacji (kolory) preferencji
 		// u¿ytkownika zdefiniowanych na poziomie systemu operacyjnego
 		// TODO - implementacja asynchronicznego mechanizmu powiadamiaj¹cego o
 		// zmianach w systemie plików i odœwie¿aj¹cego listy wyœwietlanych
 		// plików
+	}
+
+	private void diskInit()
+	{
+		File[] paths;
+		paths = File.listRoots();
+		ObservableList<File> disks = FXCollections.observableArrayList(paths);
+		leftPathComboBox.setItems(disks);
+		rightPathComboBox.setItems(disks);
+
+		leftPathComboBox.setValue(new File(leftPath.split("/")[0] + "/"));
+		rightPathComboBox.setValue(new File(rightPath.split("/")[0] + "/"));
+
+		leftPathComboBox.setOnAction((e) ->
+		{
+			File selectedDisk = leftPathComboBox.getSelectionModel().getSelectedItem();
+			if (selectedDisk != null)
+				leftPath = selectedDisk.getAbsolutePath();
+			loadFiles();
+		});
+
+		rightPathComboBox.setOnAction((e) ->
+		{
+			File selectedDisk = rightPathComboBox.getSelectionModel().getSelectedItem();
+			if (selectedDisk != null)
+				rightPath = selectedDisk.getAbsolutePath();
+
+			loadFiles();
+		});
 	}
 
 	private void closeItem()
@@ -712,6 +751,7 @@ public class MainPaneController implements Initializable
 		// copy new file(s)
 		else
 		{
+			bottomProgressBar.setDisable(false);
 			bottomCancelButton.setDisable(false);
 			bottomCancelButton.setOnAction(e ->
 			{
@@ -911,7 +951,7 @@ public class MainPaneController implements Initializable
 						updateProgress(++currentCounter, dirsCount + filesCount);
 						try
 						{
-							Thread.sleep(20);
+							Thread.sleep(30);
 						} catch (InterruptedException e1)
 						{
 							// TODO Auto-generated catch block
@@ -1051,6 +1091,8 @@ public class MainPaneController implements Initializable
 
 	private void doTaskEventCloseRoutine(boolean overwriting, int moveOrCopy, File fromFile)
 	{
+		bottomProgressBar.progressProperty().bind(new SimpleDoubleProperty(0));
+		bottomProgressBar.setDisable(true);
 		bottomCancelButton.setDisable(true);
 		if (overwriting)
 		{
