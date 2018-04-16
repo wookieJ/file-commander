@@ -156,8 +156,11 @@ public class SystemFile
 				// setting type of file based of extension
 				if (file.isFile())
 				{
-					this.fileType = new SimpleStringProperty(properties.getProperty("file") + " "
-							+ file.getName().substring(file.getName().lastIndexOf(".") + 1));
+					if (file.getName().contains("."))
+						this.fileType = new SimpleStringProperty(properties.getProperty("file") + " "
+								+ file.getName().substring(file.getName().lastIndexOf(".") + 1));
+					else
+						this.fileType = new SimpleStringProperty("");
 					this.typeOfFile = TypeOfFile.FILE;
 				} else
 				{

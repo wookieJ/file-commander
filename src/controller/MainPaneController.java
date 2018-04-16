@@ -13,15 +13,17 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.logging.Logger;
-
-import javax.swing.plaf.basic.BasicSplitPaneUI.KeyboardEndHandler;
 
 import org.apache.commons.io.FileUtils;
 
@@ -490,7 +492,6 @@ public class MainPaneController implements Initializable
 			@Override
 			public void handle(KeyEvent event)
 			{
-				System.out.println(event.getCode());
 				if (event.getCode() == KeyCode.ENTER)
 				{
 					File searchedFile = new File(rightPathTextField.getText());
@@ -1119,7 +1120,7 @@ public class MainPaneController implements Initializable
 					}
 				} else if (event.getCode() == KeyCode.LEFT)
 				{
-					leftPath = leftPath + "/..";
+					leftPath = new File(leftPath).getParent();
 					loadFiles();
 				}
 			}
@@ -1133,22 +1134,25 @@ public class MainPaneController implements Initializable
 				if (event.getClickCount() == 2)
 				{
 					SystemFile selectedFile = rightTableView.getSelectionModel().getSelectedItem();
+					if (selectedFile != null)
+					{
 
-					// if file is directory, it turns into next root file
-					if (selectedFile.isDirectory())
-					{
-						rightPath = selectedFile.getFile().getAbsolutePath();
-						loadFiles();
-					}
-					// otherwise open it in default desktop program
-					else
-					{
-						try
+						// if file is directory, it turns into next root file
+						if (selectedFile.isDirectory())
 						{
-							Desktop.getDesktop().open(selectedFile.getFile());
-						} catch (IOException e)
+							rightPath = selectedFile.getFile().getAbsolutePath();
+							loadFiles();
+						}
+						// otherwise open it in default desktop program
+						else
 						{
-							e.printStackTrace();
+							try
+							{
+								Desktop.getDesktop().open(selectedFile.getFile());
+							} catch (IOException e)
+							{
+								e.printStackTrace();
+							}
 						}
 					}
 				}
@@ -1190,7 +1194,7 @@ public class MainPaneController implements Initializable
 					}
 				} else if (event.getCode() == KeyCode.LEFT)
 				{
-					rightPath = rightPath + "/..";
+					rightPath = new File(rightPath).getParent();
 					loadFiles();
 				}
 			}
@@ -1255,14 +1259,20 @@ public class MainPaneController implements Initializable
 		// setting root file
 		String leftRootParentName = leftRootFile.getFile().getParent();
 		String rightRootParentName = rightRootFile.getFile().getParent();
-		SystemFile leftParentFile, rightParentFile;
+		SystemFile leftParentFile = null, rightParentFile = null;
 		if (leftRootParentName != null && rightRootParentName != null)
 		{
-			leftParentFile = new SystemFile(new File(leftRootParentName), properties);
-			leftParentFile.setFileName(leftRootParentName);
+			try
+			{
+				leftParentFile = new SystemFile(new File(leftRootParentName), properties);
+				leftParentFile.setFileName(new File(leftRootParentName).getCanonicalPath().toString());
 
-			rightParentFile = new SystemFile(new File(rightRootParentName), properties);
-			rightParentFile.setFileName(rightRootParentName);
+				rightParentFile = new SystemFile(new File(rightRootParentName), properties);
+				rightParentFile.setFileName(new File(rightRootParentName).getCanonicalPath().toString());
+			} catch (IOException e)
+			{
+				e.printStackTrace();
+			}
 		} else
 		{
 			leftParentFile = leftRootFile;
@@ -1283,7 +1293,7 @@ public class MainPaneController implements Initializable
 		rightParentFile.setLastModified("");
 		rightParentFile.setFileType("");
 		rightParentFile.setTypeOfFile(TypeOfFile.ROOT);
-		leftParentFile.setSize("");
+		rightParentFile.setSize("");
 		ImageView rightImageView = new ImageView(new Image("resource/folderBack.png"));
 		rightImageView.setFitHeight(20);
 		rightImageView.setFitWidth(20);
@@ -1345,6 +1355,8 @@ public class MainPaneController implements Initializable
 			iconColumn.setCellValueFactory(new PropertyValueFactory<>("image"));
 			iconColumn.setMinWidth(30);
 			iconColumn.setMaxWidth(30);
+			iconColumn.setSortable(false);
+			iconColumn.setEditable(false);
 			iconColumn.setResizable(false);
 
 			TableColumn<SystemFile, String> nameColumn = new TableColumn<SystemFile, String>(
@@ -1352,46 +1364,270 @@ public class MainPaneController implements Initializable
 			nameColumn.setCellValueFactory(new PropertyValueFactory<>("fileName"));
 			nameColumn.prefWidthProperty().bind(leftTableView.widthProperty().divide(3));
 
+			nameColumn.setComparator(new Comparator<String>()
+			{
+				@Override
+				public int compare(String o1, String o2)
+				{
+					if (o1.contains("/") || o1.contains("\\") || o2.contains("/") || o2.contains("\\"))
+						return 0;
+					else
+						return o1.compareTo(o2);
+				}
+			});
+
 			TableColumn<SystemFile, String> sizeColumn = new TableColumn<SystemFile, String>(
 					properties.getProperty("size-column", "Rozmiar"));
 			sizeColumn.setCellValueFactory(new PropertyValueFactory<>("size"));
 			sizeColumn.prefWidthProperty().bind(leftTableView.widthProperty().divide(6));
+			sizeColumn.setComparator(new Comparator<String>()
+			{
+				@Override
+				public int compare(String o1, String o2)
+				{
+					if (o1.equals("") || o2.equals(""))
+						return 0;
+					else
+					{
+						o1 = o1.replaceAll(",", ".");
+						Float floatSize1 = new Float(0);
+						if (o1.contains("kB"))
+						{
+							o1 = o1.replaceAll("kB", "");
+							floatSize1 = Float.parseFloat(o1) * 1_024f;
+						} else if (o1.contains("MB"))
+						{
+							o1 = o1.replaceAll("MB", "");
+							floatSize1 = Float.parseFloat(o1) * 1_024_000f;
+						} else if (o1.contains("GB"))
+						{
+							o1 = o1.replaceAll("GB", "");
+							floatSize1 = Float.parseFloat(o1) * 1_024_000_000f;
+						} else
+						{
+							o1 = o1.replaceAll("B", "");
+							floatSize1 = Float.parseFloat(o1);
+						}
 
-			TableColumn<SystemFile, Object> typeColumn = new TableColumn<SystemFile, Object>(
+						Float floatSize2 = new Float(0);
+						o2 = o2.replaceAll(",", ".");
+						if (o2.contains("kB"))
+						{
+							o2 = o2.replaceAll("kB", "");
+							floatSize2 = Float.parseFloat(o2) * 1_024f;
+						} else if (o2.contains("MB"))
+						{
+							o2 = o2.replaceAll("MB", "");
+							floatSize2 = Float.parseFloat(o2) * 1_024_000f;
+						} else if (o2.contains("GB"))
+						{
+							o2 = o2.replaceAll("GB", "");
+							floatSize2 = Float.parseFloat(o2) * 1_024_000_000f;
+						} else
+						{
+							o2 = o2.replaceAll("B", "");
+							floatSize2 = Float.parseFloat(o2);
+						}
+
+						return floatSize1.compareTo(floatSize2);
+					}
+				}
+			});
+
+			TableColumn<SystemFile, String> typeColumn = new TableColumn<SystemFile, String>(
 					properties.getProperty("type-column", "Typ"));
 			typeColumn.setCellValueFactory(new PropertyValueFactory<>("fileType"));
 			typeColumn.prefWidthProperty().bind(leftTableView.widthProperty().divide(7));
+			typeColumn.setComparator(new Comparator<String>()
+			{
+
+				@Override
+				public int compare(String o1, String o2)
+				{
+					if (o1.equals("") || o2.equals(""))
+						return 0;
+					else
+						return o1.compareTo(o2);
+				}
+			});
 
 			TableColumn<SystemFile, String> modifiedColumn = new TableColumn<SystemFile, String>(
 					properties.getProperty("modified-column", "Zmodyfikowany"));
 			modifiedColumn.setCellValueFactory(new PropertyValueFactory<>("lastModified"));
 			modifiedColumn.prefWidthProperty().bind(leftTableView.widthProperty().divide(5));
+			modifiedColumn.setComparator(new Comparator<String>()
+			{
+
+				@Override
+				public int compare(String o1, String o2)
+				{
+					if (o1.equals("") || o2.equals(""))
+						return 0;
+					else
+					{
+						// TODO - porównywaæ liczbê OSIX
+						SimpleDateFormat sdf = new SimpleDateFormat(properties.getProperty("date-formater"));
+						Date date1 = null;
+						Date date2 = null;
+						try
+						{
+							date1 = sdf.parse(o1);
+							date2 = sdf.parse(o2);
+						} catch (ParseException e)
+						{
+							e.printStackTrace();
+						}
+						Long longDate1 = new Long(0);
+						Long longDate2 = new Long(0);
+						if (date1 != null)
+						{
+							longDate1 = date1.getTime();
+							longDate2 = date2.getTime();
+							return longDate1.compareTo(longDate2);
+						}
+						return 0;
+					}
+				}
+			});
 
 			TableColumn<SystemFile, ImageView> iconColumnR = new TableColumn<SystemFile, ImageView>();
 			iconColumnR.setCellValueFactory(new PropertyValueFactory<>("image"));
 			iconColumnR.setMinWidth(30);
 			iconColumnR.setMaxWidth(30);
+			iconColumnR.setSortable(false);
 			iconColumnR.setResizable(false);
 
-			TableColumn<SystemFile, Object> nameColumnR = new TableColumn<SystemFile, Object>(
+			TableColumn<SystemFile, String> nameColumnR = new TableColumn<SystemFile, String>(
 					properties.getProperty("name-column", "Nazwa"));
 			nameColumnR.setCellValueFactory(new PropertyValueFactory<>("fileName"));
 			nameColumnR.prefWidthProperty().bind(leftTableView.widthProperty().divide(3));
+			nameColumnR.setComparator(new Comparator<String>()
+			{
 
-			TableColumn<SystemFile, Object> sizeColumnR = new TableColumn<SystemFile, Object>(
+				@Override
+				public int compare(String o1, String o2)
+				{
+					if (o1.contains("/") || o1.contains("\\") || o2.contains("/") || o2.contains("\\"))
+						return 0;
+					else
+						return o1.compareTo(o2);
+				}
+			});
+
+			TableColumn<SystemFile, String> sizeColumnR = new TableColumn<SystemFile, String>(
 					properties.getProperty("size-column", "Rozmiar"));
 			sizeColumnR.setCellValueFactory(new PropertyValueFactory<>("size"));
 			sizeColumnR.prefWidthProperty().bind(leftTableView.widthProperty().divide(6));
+			sizeColumnR.setComparator(new Comparator<String>()
+			{
 
-			TableColumn<SystemFile, Object> typeColumnR = new TableColumn<SystemFile, Object>(
+				@Override
+				public int compare(String o1, String o2)
+				{
+					if (o1.equals("") || o2.equals(""))
+						return 0;
+					else
+					{
+						o1 = o1.replaceAll(",", ".");
+						Float floatSize1 = new Float(0);
+						if (o1.contains("kB"))
+						{
+							o1 = o1.replaceAll("kB", "");
+							floatSize1 = Float.parseFloat(o1) * 1_024f;
+						} else if (o1.contains("MB"))
+						{
+							o1 = o1.replaceAll("MB", "");
+							floatSize1 = Float.parseFloat(o1) * 1_024_000f;
+						} else if (o1.contains("GB"))
+						{
+							o1 = o1.replaceAll("GB", "");
+							floatSize1 = Float.parseFloat(o1) * 1_024_000_000f;
+						} else
+						{
+							o1 = o1.replaceAll("B", "");
+							floatSize1 = Float.parseFloat(o1);
+						}
+
+						Float floatSize2 = new Float(0);
+						o2 = o2.replaceAll(",", ".");
+						if (o2.contains("kB"))
+						{
+							o2 = o2.replaceAll("kB", "");
+							floatSize2 = Float.parseFloat(o2) * 1_024f;
+						} else if (o2.contains("MB"))
+						{
+							o2 = o2.replaceAll("MB", "");
+							floatSize2 = Float.parseFloat(o2) * 1_024_000f;
+						} else if (o2.contains("GB"))
+						{
+							o2 = o2.replaceAll("GB", "");
+							floatSize2 = Float.parseFloat(o2) * 1_024_000_000f;
+						} else
+						{
+							o2 = o2.replaceAll("B", "");
+							floatSize2 = Float.parseFloat(o2);
+						}
+
+						return floatSize1.compareTo(floatSize2);
+					}
+				}
+			});
+
+			TableColumn<SystemFile, String> typeColumnR = new TableColumn<SystemFile, String>(
 					properties.getProperty("type-column", "Typ"));
 			typeColumnR.setCellValueFactory(new PropertyValueFactory<>("fileType"));
 			typeColumnR.prefWidthProperty().bind(leftTableView.widthProperty().divide(7));
+			typeColumnR.setComparator(new Comparator<String>()
+			{
+
+				@Override
+				public int compare(String o1, String o2)
+				{
+					if (o1.equals("") || o2.equals(""))
+						return 0;
+					else
+						return o1.compareTo(o2);
+				}
+			});
 
 			TableColumn<SystemFile, String> modifiedColumnR = new TableColumn<SystemFile, String>(
 					properties.getProperty("modified-column", "Zmodyfikowany"));
 			modifiedColumnR.setCellValueFactory(new PropertyValueFactory<>("lastModified"));
 			modifiedColumnR.prefWidthProperty().bind(leftTableView.widthProperty().divide(5));
+			modifiedColumnR.setComparator(new Comparator<String>()
+			{
+
+				@Override
+				public int compare(String o1, String o2)
+				{
+					if (o1.equals("") || o2.equals(""))
+						return 0;
+					else
+					{
+						// TODO - porównywaæ liczbê OSIX
+						SimpleDateFormat sdf = new SimpleDateFormat(properties.getProperty("date-formater"));
+						Date date1 = null;
+						Date date2 = null;
+						try
+						{
+							date1 = sdf.parse(o1);
+							date2 = sdf.parse(o2);
+						} catch (ParseException e)
+						{
+							e.printStackTrace();
+						}
+						Long longDate1 = new Long(0);
+						Long longDate2 = new Long(0);
+						if (date1 != null)
+						{
+							longDate1 = date1.getTime();
+							longDate2 = date2.getTime();
+							return longDate1.compareTo(longDate2);
+						}
+						return 0;
+					}
+				}
+			});
 
 			if (leftTableView.getColumns().size() > 0)
 				leftTableView.getColumns().clear();
