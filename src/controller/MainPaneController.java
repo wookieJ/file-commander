@@ -205,15 +205,48 @@ public class MainPaneController implements Initializable
 		textPathSearchInit();
 		copyFilesInit();
 		toolbarInit();
+		aboutMenuItem();
+		closeItem();
 
-		// TODO - Sortowanie - nie braæ pod uwagê powracj¹cego elelementu
-		// TODO - About (o aplikacji)
+		// TODO - sortowanie po nazwie - liczby w nazwie
 		// TODO - zamykanie na przycisk File->close
 		// TODO - uwzglêdnianie w wygl¹dzie aplikacji (kolory) preferencji
 		// u¿ytkownika zdefiniowanych na poziomie systemu operacyjnego
 		// TODO - implementacja asynchronicznego mechanizmu powiadamiaj¹cego o
 		// zmianach w systemie plików i odœwie¿aj¹cego listy wyœwietlanych
 		// plików
+	}
+
+	private void closeItem()
+	{
+		closeMenuItem.setOnAction(new EventHandler<ActionEvent>()
+		{
+			@Override
+			public void handle(ActionEvent event)
+			{
+				System.exit(0);
+			}
+		});
+	}
+
+	private void aboutMenuItem()
+	{
+		aboutMenuItem.setOnAction(new EventHandler<ActionEvent>()
+		{
+
+			@Override
+			public void handle(ActionEvent event)
+			{
+				Alert alert = new Alert(AlertType.INFORMATION);
+				alert.setTitle(properties.getProperty("about-title", "O aplikacji"));
+				alert.setHeaderText(properties.getProperty("about-title", "O aplikacji"));
+				alert.setContentText(properties.getProperty("about-content", "Aplikacja commander"));
+				Stage alertStage = (Stage) alert.getDialogPane().getScene().getWindow();
+				alertStage.getIcons().add(new Image("/resource/logo.png"));
+
+				alert.showAndWait();
+			}
+		});
 	}
 
 	private void toolbarInit()
